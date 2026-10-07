@@ -1,3 +1,5 @@
+mod disable_saves;
+mod fn_hooks;
 mod sdl_fixes;
 mod version_stub;
 
@@ -14,8 +16,14 @@ pub extern "system" fn DllMain(
   if ul_reason_for_call == DLL_PROCESS_ATTACH {
     std::thread::spawn(|| {
       unsafe {
+        // Opens a visible terminal window alongside the game for debugging prints
+        let _ = windows::Win32::System::Console::AllocConsole();
+        println!("Loaded dll proxy");
+
+        disable_saves::disable_saves();
+
         // Initialize window hooks (fixes alt-tab fullscreen crashes)
-        sdl_fixes::initialize_window_hooks();
+        //sdl_fixes::initialize_window_hooks();
 
         // Initialize your game logic / update hooks
         //initialize_game_hook();
