@@ -1,5 +1,7 @@
+mod archipelago;
 mod disable_saves;
 mod fn_hooks;
+mod game_data;
 mod sdl_fixes;
 mod version_stub;
 
