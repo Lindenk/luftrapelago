@@ -84,7 +84,31 @@ class LuftrausersWorld(World):
     required_items = []
 
     # parts
-    required_items.extend([item.item_name for item in parts])
+    # give the player a starting plane
+    starting_parts = []
+    if options.randomize_starting_loadout:
+      weapon = list(Names.WeaponNames)
+      weapon.remove(Names.WeaponNames.URauserWeapon)
+      starting_parts.append(random.choice(weapon))
+
+      body = list(Names.BodyNames)
+      body.remove(Names.BodyNames.URauserBody)
+      starting_parts.append(random.choice(body))
+
+      engine = list(Names.EngineNames)
+      engine.remove(Names.EngineNames.URauserEngine)
+      starting_parts.append(random.choice(engine))
+    else:
+      starting_parts = [
+        Names.WeaponNames.OriginalWeapon,
+        Names.BodyNames.OriginalBody,
+        Names.EngineNames.OriginalEngine
+      ]
+    for part in starting_parts:
+      self.multiworld.push_precollected(self.create_item(part))
+
+    pool_parts = [item.item_name for item in parts if item.item_name not in starting_parts]
+    required_items.extend(pool_parts)
 
     # bonuses
     required_items.extend([powerups["damage"].item_name for _n in range(options.powerup_damage)])
@@ -165,3 +189,57 @@ class LuftrausersWorld(World):
     loc.place_locked_item(victory_item)
     self.multiworld.completion_condition[self.player] = \
       lambda state: state.has(Names.MiscItems.Victory, self.player)
+
+  def fill_slot_data(self) -> dict[str, Any]:
+    options: LuftrausersOptions = cast(LuftrausersOptions, self.options)
+
+    # manually creating this to decouple it from future options changes
+    if options.goal == 0:
+      goal = { "name": "urauser" }
+    elif options.goal == 1:
+      goal = {
+        "name": "unique_blimp_kills",
+        "planes": options.required_unique_planes
+      }
+    elif options.goal == 2:
+      goal = {
+        "name": "unique_classified1_kills",
+        "planes": options.required_unique_planes
+      }
+    elif options.goal == 3:
+      goal = {
+        "name": "unique_classified2_kills",
+        "planes": options.required_unique_planes
+      }
+    elif options.goal == 4:
+      goal = {
+        "name": "score_attack",
+        "score": options.required_score
+      }
+    elif options.goal == 5:
+      goal = {
+        "name": "score_total",
+        "score": options.required_score
+      }
+    else:
+      raise Exception("Somehow no goal was set")
+
+    data = {
+      "goal": goal,
+      "starting_power": options.starting_power,
+      "powerup_bonuses": {
+        "damage": options.powerup_damage_bonus,
+        "health": options.powerup_health_bonus,
+        "fire_rate": options.powerup_fire_rate_bonus
+      }
+    }
+
+    if options.enable_rank_keys:
+      data["rank_key_mission_lock"] = options.rank_key_mission_lock
+
+    if options.deathlink:
+      data["deathlink_counter"] = options.deathlink_counter
+
+    # TODO: Missionsanity
+
+    return data
