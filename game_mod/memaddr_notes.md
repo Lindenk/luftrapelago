@@ -1,3 +1,8 @@
+BEST SCORE  0x128
+BEST COMBO  0x130
+GAMES       0x138
+TOTAL TIME  0x148
+
 [0x1ab34fa]:
 +0x34 = Unlocked items (padding, engine, body, weapon)
 
