@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::sync::OnceLock;
 use windows::Win32::System::LibraryLoader::GetModuleHandleA;
 
@@ -12,17 +14,17 @@ pub fn get_base_address() -> &'static usize {
 macro_rules! define_detour_hooks {
   (
     $(
-      $vis:vis static $name:ident : extern "C" fn ($($arg:ty),*) -> $ret:ty => $offset:expr;
+      $vis:vis static $name:ident : extern $abi:literal fn ($($arg:ty),*) -> $ret:ty => $offset:expr;
     )*
   ) => {
     paste::paste! {
       $(
         // Recreate the Fn type
-        $vis type [<$name Fn>] = extern "C" fn ($($arg),*) -> $ret;
+        $vis type [<$name Fn>] = extern $abi fn ($($arg),*) -> $ret;
 
         // Create the hook
         detour::static_detour! {
-          $vis static [<$name Hook>]: extern "C" fn ($($arg),*) -> $ret;
+          $vis static [<$name Hook>]: extern $abi fn ($($arg),*) -> $ret;
         }
 
         // Provide repetative helper fns
@@ -94,6 +96,7 @@ macro_rules! define_external_detour_hooks {
 define_detour_hooks! {
   pub static LoadSave: extern "C" fn() -> i32 => 0x7f150;
   pub static SaveGame: extern "C" fn(i32) -> i32 => 0x7fe10;
+  pub static InitGame: extern "thiscall" fn(*mut std::ffi::c_void, i32) -> () => 0xff2e0;
 }
 
 define_external_detour_hooks! {

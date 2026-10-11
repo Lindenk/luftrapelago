@@ -4,7 +4,7 @@ use windows::core::PCSTR;
 
 use crate::fn_hooks::{FiopenHook, OStreamWriteHook};
 
-pub unsafe fn disable_saves() {
+pub unsafe fn redirect_saves() {
   //let _ = unsafe {
   //  LoadSaveHook.initialize(fn_load_save, || {
   //    // skip the function, ie. don't let the game load save data because it

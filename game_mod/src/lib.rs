@@ -1,13 +1,15 @@
 mod archipelago;
-mod disable_saves;
 mod fn_hooks;
 mod game_data;
+mod redirect_saves;
 mod sdl_fixes;
 mod version_stub;
 
 use std::ffi::c_void;
 use windows::Win32::Foundation::HMODULE;
 use windows::Win32::System::SystemServices::DLL_PROCESS_ATTACH;
+
+use crate::archipelago::client::Archipelago;
 
 #[unsafe(no_mangle)]
 pub extern "system" fn DllMain(
@@ -16,13 +18,17 @@ pub extern "system" fn DllMain(
   _lp_reserved: *mut c_void,
 ) -> bool {
   if ul_reason_for_call == DLL_PROCESS_ATTACH {
+    let ap_client = Archipelago::with_console_prompt();
+
+    // redirect the save file, based on the current seed
+
     std::thread::spawn(|| {
       unsafe {
         // Opens a visible terminal window alongside the game for debugging prints
-        let _ = windows::Win32::System::Console::AllocConsole();
-        println!("Loaded dll proxy");
+        //let _ = windows::Win32::System::Console::AllocConsole();
+        //println!("Loaded dll proxy");
 
-        disable_saves::disable_saves();
+        //redirect_saves::disable_saves();
 
         // Initialize window hooks (fixes alt-tab fullscreen crashes)
         //sdl_fixes::initialize_window_hooks();
