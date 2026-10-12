@@ -2,7 +2,6 @@ mod archipelago;
 mod fn_hooks;
 mod game_data;
 mod mods;
-mod sdl_fixes;
 mod util;
 mod version_stub;
 
