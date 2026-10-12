@@ -1,6 +1,7 @@
 use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
+#[serde(rename_all = "snake_case")]
 #[serde(tag = "name")]
 pub enum Goal {
   Urauser,
@@ -12,6 +13,7 @@ pub enum Goal {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct PowerupBonuses {
   damage: u16,
   health: u16,
@@ -19,6 +21,7 @@ pub struct PowerupBonuses {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct SlotData {
   goal: Goal,
   starting_power: u16,

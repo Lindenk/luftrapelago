@@ -35,17 +35,23 @@ impl Archipelago {
     // apparently you can't break with a return value in a for or while loop
     // guess we choose an error prone, statically unanalyzable way to do it instead
     let connection = loop {
-      let (server, slot, password) = Self::console_prompt();
+      //let (server, slot, password) = Self::console_prompt();
+      let (server, slot, password) = (
+        "localhost:56427".to_string(),
+        "Pineapple_LRS".to_string(),
+        "".to_string(),
+      );
       let password = if password.is_empty() {
         None
       } else {
         Some(password)
       };
-      let conn = Self::connect(server, slot, password);
+      let mut conn = Self::connect(server, slot, password);
       println!("Connecting...");
 
-      let mut retries = 30;
+      let mut retries = 100;
       while conn.is_connecting() && retries > 0 {
+        conn.update();
         std::thread::sleep(Duration::from_millis(100));
         retries -= 1;
       }
@@ -85,6 +91,7 @@ impl Archipelago {
       server = String::from("archipelago.gg:38281");
     }
     let server = server.trim().to_string();
+    //let server = format!("ws://{}", server);
     println!("Got server name: {}", server);
 
     let slot = loop {

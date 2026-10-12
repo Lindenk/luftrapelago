@@ -1,8 +1,9 @@
 mod archipelago;
 mod fn_hooks;
 mod game_data;
-mod redirect_saves;
+mod mods;
 mod sdl_fixes;
+mod util;
 mod version_stub;
 
 use std::ffi::c_void;
@@ -10,7 +11,9 @@ use windows::Win32::Foundation::HMODULE;
 use windows::Win32::System::SystemServices::DLL_PROCESS_ATTACH;
 
 use crate::archipelago::client::Archipelago;
-use crate::redirect_saves::redirect_saves;
+use crate::fn_hooks::EntryHook;
+use crate::mods::disable_steam_achievements::disable_steam_achievements;
+use crate::mods::redirect_saves::redirect_saves_patch;
 
 #[unsafe(no_mangle)]
 pub extern "system" fn DllMain(
@@ -19,28 +22,25 @@ pub extern "system" fn DllMain(
   _lp_reserved: *mut c_void,
 ) -> bool {
   if ul_reason_for_call == DLL_PROCESS_ATTACH {
+    hook_init();
+  }
+  true
+}
+
+pub fn hook_init() {
+  let _ = EntryHook.init_with_self(|| {
     let mut ap_client = Archipelago::with_console_prompt();
 
     // redirect the save file so we have a unique one per ap run
     let _ = unsafe { windows::Win32::System::Console::AllocConsole() };
     let seed = ap_client.client().seed_name();
-    redirect_saves(seed);
+    redirect_saves_patch(seed);
 
-    std::thread::spawn(|| {
-      unsafe {
-        // Opens a visible terminal window alongside the game for debugging prints
-        //let _ = windows::Win32::System::Console::AllocConsole();
-        //println!("Loaded dll proxy");
+    // disable steam achievements so we don't accidentally let the player
+    // ruin their steam account
+    disable_steam_achievements();
 
-        //redirect_saves::disable_saves();
-
-        // Initialize window hooks (fixes alt-tab fullscreen crashes)
-        //sdl_fixes::initialize_window_hooks();
-
-        // Initialize your game logic / update hooks
-        //initialize_game_hook();
-      }
-    });
-  }
-  true
+    EntryHook.call()
+  });
+  let _ = unsafe { EntryHook.enable() };
 }
