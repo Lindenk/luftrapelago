@@ -175,23 +175,27 @@ class PowerupFireRateBonus(Range):
   default = 50
 
 class FillerWeights(OptionCounter):
-  """
-  The weighting for each filler item (including traps)
-  """
-  schema = Schema({
-    Optional("Patch Up"): lambda n: n >= 0,
-    Optional("Gun Jam Trap"): lambda n: n >= 0,
-    Optional("Spawn Trap"): lambda n: n >= 0,
-    Optional("Missle Trap"): lambda n: n >= 0,
-  })
-  display_name = "Filler Weights"
-  default = {
-    "Patch Up": 5,
-    "Blank": 2,
-    "Gun Jam Trap": 2,
-    "Spawn Trap": 2,
-    "Missle Trap": 2
-  }
+    """
+    The weighting for each filler item (including traps)
+    """
+    display_name = "Filler Weights"
+
+    # Define valid keys directly so the UI and generator recognize them
+    valid_keys = {
+      "Patch Up",
+      "Blank",
+      "Gun Jam Trap",
+      "Spawn Trap",
+      "Missile Trap",
+    }
+
+    default = {
+      "Patch Up": 5,
+      "Blank": 2,
+      "Gun Jam Trap": 2,
+      "Spawn Trap": 2,
+      "Missile Trap": 2,
+    }
 
 # Link options
 class DeathLink(Choice):

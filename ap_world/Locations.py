@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from BaseClasses import Location
 
-from .Names import MiscLocations, weapon_missions, body_missions, engine_missions, level_names, generic_completions
+from .Names import weapon_missions, body_missions, engine_missions, level_names, generic_completions
 
 @dataclass
 class LuftrausersLocationData:
@@ -30,17 +30,13 @@ level_locations = [LuftrausersLocationData(name, i + 0x300) for i, name in enume
 
 generic_completion_locations = [LuftrausersLocationData(name, i + 0x400) for i, name in enumerate(generic_completions)]
 
-misc_locations = [
-  LuftrausersLocationData(MiscLocations.LaunchURauser, 0x600),
-  LuftrausersLocationData(MiscLocations.ScoreAttack, 0x601)
-]
-
 location_groups: dict[str, set[str]] = {
   "Missions": {loc.name for loc in mission_locations},
   "Levels": {loc.name for loc in level_locations},
   "Completions": {loc.name for loc in generic_completion_locations}
 }
 
-all_locations: list[LuftrausersLocationData] = mission_locations + level_locations + generic_completion_locations + misc_locations
+all_locations: list[LuftrausersLocationData] = \
+  mission_locations + level_locations + generic_completion_locations
 scoutable_locations: list[LuftrausersLocationData] = mission_locations
 location_table: dict[str, LuftrausersLocationData] = {loc.name: loc for loc in all_locations}

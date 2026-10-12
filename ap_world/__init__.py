@@ -6,7 +6,7 @@ import orjson
 from BaseClasses import Item, ItemClassification, MultiWorld, Tutorial, Region
 from worlds.AutoWorld import WebWorld, World
 
-import Names
+from . import Names
 from worlds.generic.Rules import add_rule
 from .Options import Goal, LuftrausersOptions, luftrausers_option_groups
 from .Items import LuftrausersItem, item_groups, items_by_id, item_table, parts, powerups, misc
@@ -54,22 +54,36 @@ class LuftrausersWorld(World):
     # all completions past the goal completion
     self.excluded_locations.extend(Names.generic_completions[options.required_unique_planes:])
 
-    if options.goal != 0: # launch urauser
-      self.excluded_location.append(Names.MiscLocations.LaunchURauser)
-    if options.goal not in [4, 5]: # score attack
-      self.excluded_locations.append(Names.MiscLocations.ScoreAttack)
-
   def create_regions(self) -> None:
     """
     This game doesn't really have regions, so just make a menu region. Regions
     could be used for mission tiers or part missions, but since they overlap
     I'd prefer to handle both requirements in the same way
     """
+    options: LuftrausersOptions = cast(LuftrausersOptions, self.options)
     menu = Region("Menu", self.player, self.multiworld)
 
-    menu.locations.extend([LuftrausersLocation(self.player, loc.name, self.base_id + loc.code)
+    # exclude locations
+    locations = [LuftrausersLocation(self.player, loc.name, self.base_id + loc.code)
       for loc in all_locations
-      if loc.name not in self.exluded_locations])
+      if loc.name not in self.excluded_locations]
+
+    # victory locations
+    if options.goal == 0: # launch urauser
+      locations.append(
+        LuftrausersLocation(self.player, Names.VictoryLocations.LaunchURauser, None))
+    elif options.goal in [1, 2, 3]: # Unique 'completions'
+      locations.append(
+        LuftrausersLocation(self.player, Names.VictoryLocations.FinishedUniqueCompletions, None))
+    elif options.goal in [4, 5]: # score attack
+      locations.append(
+        LuftrausersLocation(self.player, Names.VictoryLocations.ScoreAttack, None))
+
+    # add them in
+    for loc in locations:
+      loc.parent_region = menu
+
+    menu.locations.extend(locations)
 
     self.multiworld.regions.append(menu)
 
@@ -87,15 +101,15 @@ class LuftrausersWorld(World):
     # give the player a starting plane
     starting_parts = []
     if options.randomize_starting_loadout:
-      weapon = list(Names.WeaponNames)
+      weapon = Names.WeaponNames.iter()
       weapon.remove(Names.WeaponNames.URauserWeapon)
       starting_parts.append(random.choice(weapon))
 
-      body = list(Names.BodyNames)
+      body = Names.BodyNames.iter()
       body.remove(Names.BodyNames.URauserBody)
       starting_parts.append(random.choice(body))
 
-      engine = list(Names.EngineNames)
+      engine = Names.EngineNames.iter()
       engine.remove(Names.EngineNames.URauserEngine)
       starting_parts.append(random.choice(engine))
     else:
@@ -120,8 +134,8 @@ class LuftrausersWorld(World):
       n = (6 - options.rank_key_mission_lock) + options.extra_rank_keys
       required_items.extend([misc["rank_keys"].item_name for _n in range(n)])
 
-    # filler and traps
-    total_filler = len(required_items) - total_locations
+    # filler and traps, 1 extra for the victory item
+    total_filler = total_locations - len(required_items) - 1
 
     filler_names = list(options.filler_weights.keys())
     filler_weights = list(options.filler_weights.values())
@@ -136,7 +150,7 @@ class LuftrausersWorld(World):
       "Blank": Names.Filler.Blank,
       "Gun Jam Trap": Names.Filler.TrapJam,
       "Spawn Trap": Names.Filler.TrapSpawn,
-      "Missle Trap": Names.Filler.TrapMissles
+      "Missile Trap": Names.Filler.TrapMissiles
     }
     filler_items = [filler_map[item] for item in filler_items]
 
@@ -169,20 +183,26 @@ class LuftrausersWorld(World):
     for c in Names.generic_completions[:options.required_unique_planes]:
       add_rule(self.get_location(c), lambda state: state.has_group("Powerups", self.player, count=total_powerups//2))
 
-    # misc rules
-    add_rule(self.get_location(Names.MiscLocations.LaunchURauser),
-      lambda state: state.has_all([
-        Names.WeaponNames.URauserWeapon, Names.BodyNames.URauserBody, Names.EngineNames.URauserEngine
-      ], self.player))
-
     # Set goal
     victory_item = LuftrausersItem(Names.MiscItems.Victory, ItemClassification.progression, None, self.player)
     if options.goal == 0: # URauser
-      loc = self.get_location(Names.MiscLocations.LaunchURauser)
+      loc = self.get_location(Names.VictoryLocations.LaunchURauser)
+      add_rule(loc,
+        lambda state: state.has_all([
+          Names.WeaponNames.URauserWeapon, Names.BodyNames.URauserBody, Names.EngineNames.URauserEngine
+        ], self.player))
     elif options.goal in [1, 2, 3]: # Unique 'completions'
-      loc = self.get_location(Names.generic_completions[options.required_unique_planes-1])
+      loc_completion = Names.generic_completions[options.required_unique_planes-1]
+      loc = self.get_location(Names.VictoryLocations.FinishedUniqueCompletions)
+      add_rule(loc, lambda state: state.can_reach_location(loc_completion, self.player))
     elif options.goal in [4, 5]: # Score based
-      loc = self.get_location(Names.MiscLocations.ScoreAttack)
+      loc = self.get_location(Names.VictoryLocations.ScoreAttack)
+      # assume the player must get all powerups to acheive the score
+      add_rule(loc, lambda state: state.has_all_counts({
+        Names.Bonuses.PowerupDamage: int(options.powerup_damage),
+        Names.Bonuses.PowerupDamage: int(options.powerup_health),
+        Names.Bonuses.PowerupDamage: int(options.powerup_fire_rate),
+      }, self.player))
     else:
       raise Exception("Somehow no goal was set")
 
@@ -199,46 +219,46 @@ class LuftrausersWorld(World):
     elif options.goal == 1:
       goal = {
         "name": "unique_blimp_kills",
-        "planes": options.required_unique_planes
+        "planes": options.required_unique_planes.value
       }
     elif options.goal == 2:
       goal = {
         "name": "unique_classified1_kills",
-        "planes": options.required_unique_planes
+        "planes": options.required_unique_planes.value
       }
     elif options.goal == 3:
       goal = {
         "name": "unique_classified2_kills",
-        "planes": options.required_unique_planes
+        "planes": options.required_unique_planes.value
       }
     elif options.goal == 4:
       goal = {
         "name": "score_attack",
-        "score": options.required_score
+        "score": options.required_score.value
       }
     elif options.goal == 5:
       goal = {
         "name": "score_total",
-        "score": options.required_score
+        "score": options.required_score.value
       }
     else:
       raise Exception("Somehow no goal was set")
 
     data = {
       "goal": goal,
-      "starting_power": options.starting_power,
+      "starting_power": options.starting_power.value,
       "powerup_bonuses": {
-        "damage": options.powerup_damage_bonus,
-        "health": options.powerup_health_bonus,
-        "fire_rate": options.powerup_fire_rate_bonus
+        "damage": options.powerup_damage_bonus.value,
+        "health": options.powerup_health_bonus.value,
+        "fire_rate": options.powerup_fire_rate_bonus.value
       }
     }
 
     if options.enable_rank_keys:
-      data["rank_key_mission_lock"] = options.rank_key_mission_lock
+      data["rank_key_mission_lock"] = options.rank_key_mission_lock.value
 
     if options.deathlink:
-      data["deathlink_counter"] = options.deathlink_counter
+      data["deathlink_counter"] = options.deathlink_counter.value
 
     # TODO: Missionsanity
 

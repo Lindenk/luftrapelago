@@ -54,7 +54,7 @@ filler: list[LuftrausersItemData] = [
 traps: list[LuftrausersItemData] = [
   LuftrausersItemData(0x0140, Filler.TrapJam, ItemClassification.trap),
   LuftrausersItemData(0x0140, Filler.TrapSpawn, ItemClassification.trap),
-  LuftrausersItemData(0x0140, Filler.TrapMissles, ItemClassification.trap),
+  LuftrausersItemData(0x0140, Filler.TrapMissiles, ItemClassification.trap),
 ]
 
 item_groups: dict[str, set[str]] = {

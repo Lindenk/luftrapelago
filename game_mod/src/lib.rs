@@ -10,6 +10,7 @@ use windows::Win32::Foundation::HMODULE;
 use windows::Win32::System::SystemServices::DLL_PROCESS_ATTACH;
 
 use crate::archipelago::client::Archipelago;
+use crate::redirect_saves::redirect_saves;
 
 #[unsafe(no_mangle)]
 pub extern "system" fn DllMain(
@@ -18,9 +19,12 @@ pub extern "system" fn DllMain(
   _lp_reserved: *mut c_void,
 ) -> bool {
   if ul_reason_for_call == DLL_PROCESS_ATTACH {
-    let ap_client = Archipelago::with_console_prompt();
+    let mut ap_client = Archipelago::with_console_prompt();
 
-    // redirect the save file, based on the current seed
+    // redirect the save file so we have a unique one per ap run
+    let _ = unsafe { windows::Win32::System::Console::AllocConsole() };
+    let seed = ap_client.client().seed_name();
+    redirect_saves(seed);
 
     std::thread::spawn(|| {
       unsafe {

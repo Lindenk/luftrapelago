@@ -85,6 +85,7 @@ impl Archipelago {
       server = String::from("archipelago.gg:38281");
     }
     let server = server.trim().to_string();
+    println!("Got server name: {}", server);
 
     let slot = loop {
       let mut slot = String::new();
@@ -97,6 +98,7 @@ impl Archipelago {
         break slot;
       }
     };
+    println!("Got slot name: {}", slot);
 
     print!("Password (press enter if none): ");
     let mut password = String::new();
@@ -107,7 +109,7 @@ impl Archipelago {
     (server, slot, password)
   }
 
-  fn client(&mut self) -> &mut ap_rs::Client<SlotData> {
+  pub fn client(&mut self) -> &mut ap_rs::Client<SlotData> {
     if let ConnectionState::Connected(client) = self.connection.state_mut() {
       client
     } else {

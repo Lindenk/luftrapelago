@@ -1,15 +1,23 @@
-from enum import StrEnum
+class NameBase:
+  @classmethod
+  def iter(cls) -> list[str]:
+    """Dynamically collects all string constants from the class and its superclasses."""
+    return [
+      getattr(cls, attr)
+      for attr in dir(cls)
+      if not attr.startswith("_") and isinstance(getattr(cls, attr), str)
+    ]
 
 # Items
-class WeaponNames(StrEnum):
+class WeaponNames(NameBase):
   OriginalWeapon = "Original (Weapon)"
   Laser = "Laser"
   Spread = "Spread"
-  Missles = "Missles"
+  Missles = "Missiles"
   Cannon = "Cannon"
   URauserWeapon = "URauser (Weapon)"
 
-class BodyNames(StrEnum):
+class BodyNames(NameBase):
   OriginalBody = "Original (Body)"
   Armor = "Armor"
   Melee = "Melee"
@@ -17,7 +25,7 @@ class BodyNames(StrEnum):
   Bomb = "Bomb"
   URauserBody = "URauser (Body)"
 
-class EngineNames(StrEnum):
+class EngineNames(NameBase):
   OriginalEngine = "Original (Engine)"
   Superboost = "Superboost"
   Gungine = "Gungine"
@@ -25,19 +33,19 @@ class EngineNames(StrEnum):
   Hover = "Hover"
   URauserEngine = "URauser (Engine)"
 
-class Bonuses(StrEnum):
+class Bonuses(NameBase):
   PowerupDamage = "Schadensbooster"
   PowerupHealth = "Heilung"
   PowerupFireRate = "Schnellfeuer"
 
-class Filler(StrEnum):
+class Filler(NameBase):
   Patchup = "Patch Up"
   Blank = "Screen Clear"
   TrapJam = "Gun Jam"
   TrapSpawn = "Wave Spawn"
-  TrapMissles = "Anti-air Missles"
+  TrapMissiles = "Anti-air Missiles"
 
-class MiscItems(StrEnum):
+class MiscItems(NameBase):
   ProgressiveRank = "Progressive Rank"
   Victory = "Victory"
 
@@ -47,33 +55,34 @@ class MiscItems(StrEnum):
 # but add some padding if we want to randomize the
 # number of missions later
 weapon_missions: dict[tuple[str, int], str] = {
-  (part, mission_no): f"Mission - Weapon ${part} ${mission_no}"
-  for part in WeaponNames
-  for mission_no in range(16)
+  (part, mission_no): f"Mission - Weapon {part} {mission_no}"
+  for part in WeaponNames.iter()
+  for mission_no in range(1, 6)
 }
 body_missions: dict[tuple[str, int], str] = {
-  (part, mission_no): f"Mission - Body ${part} ${mission_no}"
-  for part in BodyNames
-  for mission_no in range(16)
+  (part, mission_no): f"Mission - Body {part} {mission_no}"
+  for part in BodyNames.iter()
+  for mission_no in range(1, 6)
 }
 engine_missions: dict[tuple[str, int], str] = {
-  (part, mission_no): f"Mission - Engine ${part} ${mission_no}"
-  for part in EngineNames
-  for mission_no in range(16)
+  (part, mission_no): f"Mission - Engine {part} {mission_no}"
+  for part in EngineNames.iter()
+  for mission_no in range(1, 6)
 }
 
 level_names = [
-  f"Rauser Level ${i}"
+  f"Rauser Level {i}"
   for i in range(1, 11)
 ]
 
-class MiscLocations(StrEnum):
+class VictoryLocations(NameBase):
   LaunchURauser = "Launch URauser"
+  FinishedUniqueCompletions = "Finished Unique Completions"
   ScoreAttack = "Score Attack"
 
 # 126 potential unique game 'completions'
 generic_completions = [
-  f"Unique Completion ${n}" for n in range(1, 126)
+  f"Unique Completion {n}" for n in range(1, 126)
 ]
 
 """ TODO: Specific plane completions
