@@ -2,10 +2,9 @@ use std::ops::Add;
 
 use crate::fn_hooks::get_base_address;
 
+const GLOBAL_STATS_PTR: usize = 0x16b3510;
 
-const GLOBAL_STATS_PTR = 0x16b3510;
-
-fn get_global_stats_base() -> &'static usize {
+fn get_global_stats_base() -> usize {
   GLOBAL_STATS_PTR + get_base_address()
 }
 
