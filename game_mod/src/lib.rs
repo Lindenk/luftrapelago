@@ -21,12 +21,12 @@ pub extern "system" fn DllMain(
   _lp_reserved: *mut c_void,
 ) -> bool {
   if ul_reason_for_call == DLL_PROCESS_ATTACH {
-    hook_init();
+    hook_entry();
   }
   true
 }
 
-pub fn hook_init() {
+pub fn hook_entry() {
   let _ = EntryHook.init_with_self(|| {
     let mut ap_client = Archipelago::with_console_prompt();
 

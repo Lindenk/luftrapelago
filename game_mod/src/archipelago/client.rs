@@ -37,7 +37,7 @@ impl Archipelago {
     let connection = loop {
       //let (server, slot, password) = Self::console_prompt();
       let (server, slot, password) = (
-        "localhost:56427".to_string(),
+        "localhost:58277".to_string(),
         "Pineapple_LRS".to_string(),
         "".to_string(),
       );
@@ -129,6 +129,8 @@ impl Archipelago {
   pub fn update(&mut self) {
     let events = self.connection.update();
 
+    //self.client().
+    //
     //for e in events {
     //  match e {
     //    Event::ReceivedItems(id) => self.items,
