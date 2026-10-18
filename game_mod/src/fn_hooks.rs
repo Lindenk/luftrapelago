@@ -95,25 +95,9 @@ macro_rules! define_external_detour_hooks {
 
 define_detour_hooks! {
   pub static Entry: extern "C" fn() -> () => 0x1dc925;
-  pub static InitGame: extern "thiscall" fn(*mut std::ffi::c_void, i32) -> () => 0xffee0;
-  pub static LoadSave: extern "C" fn() -> i32 => 0x7f150;
-  pub static SaveGame: extern "C" fn(i32) -> i32 => 0x7fe10;
+  pub static MasterGameInit: extern "stdcall" fn(*mut std::ffi::c_void) -> () => 0x9d8b0;
 }
 
 define_external_detour_hooks! {
-  pub static Fiopen from "MSVCP100.dll" => "?_Fiopen@std@@YAPAU_iobuf@@PBDHH@Z" : extern "C" fn(
-    *const std::ffi::c_char, // filename
-    i32,          // std::ios_base::openmode flags
-    i32           // file protection/sharing mode
-  ) -> *mut std::ffi::c_void;
-  pub static CreateFileA from "KERNEL32.dll" => "CreateFileA" : extern "system" fn(
-      *const std::ffi::c_char, // lpFileName
-      u32,                     // dwDesiredAccess
-      u32,                     // dwShareMode
-      *mut std::ffi::c_void,   // lpSecurityAttributes
-      u32,                     // dwCreationDisposition
-      u32,                     // dwFlagsAndAttributes
-      *mut std::ffi::c_void    // hTemplateFile
-    ) -> *mut std::ffi::c_void;   // HANDLE
-    pub static SteamUserStats from "steam_api.dll" => "SteamUserStats" : extern "C" fn() -> *mut *mut std::ffi::c_void;
+  pub static SteamUserStats from "steam_api.dll" => "SteamUserStats" : extern "C" fn() -> *mut *mut std::ffi::c_void;
 }

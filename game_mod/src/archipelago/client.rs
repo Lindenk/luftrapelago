@@ -10,11 +10,11 @@ use windows::Win32::System::Console::{AllocConsole, FreeConsole};
 
 use crate::archipelago::slot::SlotData;
 
-pub struct Archipelago {
+pub struct APClient {
   connection: ap_rs::Connection<SlotData>,
 }
 
-impl Archipelago {
+impl APClient {
   fn connect<S, N, P>(url: S, slot: N, pass: Option<P>) -> ap_rs::Connection<SlotData>
   where
     S: Into<String>,
@@ -34,10 +34,10 @@ impl Archipelago {
 
     // apparently you can't break with a return value in a for or while loop
     // guess we choose an error prone, statically unanalyzable way to do it instead
-    let connection = loop {
+    let mut connection = loop {
       //let (server, slot, password) = Self::console_prompt();
       let (server, slot, password) = (
-        "localhost:58277".to_string(),
+        "localhost:62802".to_string(),
         "Pineapple_LRS".to_string(),
         "".to_string(),
       );
@@ -71,6 +71,10 @@ impl Archipelago {
 
     unsafe {
       let _ = FreeConsole();
+    }
+    // fetch all outstanding items before we start
+    while connection.client_mut().unwrap().sync().is_err() {
+      std::thread::sleep(Duration::from_millis(20));
     }
 
     Self { connection }

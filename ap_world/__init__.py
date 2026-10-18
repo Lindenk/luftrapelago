@@ -36,7 +36,7 @@ class LuftrausersWebWorld(WebWorld):
     option_groups = luftrausers_option_groups
 
 
-BASE_ID = 0x10F7A405345
+BASE_ID = 0x1f700000
 
 
 class LuftrausersWorld(World):
