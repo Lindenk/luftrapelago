@@ -1,10 +1,10 @@
 use std::mem;
 
 use crate::{
-  archipelago::{client, items::APItem},
+  archipelago::items::APItem,
   fn_hooks::MasterGameInitHook,
   game_data::stats::GlobalStats,
-  state::{GAME_STATE, GameConnected, GameInitializing, GameState},
+  state::{GAME_STATE, GameConnected, GameState},
 };
 
 pub fn init_game_stats() {
@@ -29,31 +29,18 @@ pub fn init_game_stats() {
 
         // transition to connected
         let old_state = mem::replace(&mut *state, GameState::Disconnected);
-        let mut client = match old_state {
+        let client = match old_state {
           GameState::Intializing(g) => g.client,
           // Safety: We checked for this above and hold a lock on GameState
           _ => unreachable!(),
         };
-        println!("All initial items {:?}", client.client().received_items());
 
-        let initial_items: Vec<_> = client
-          .client()
-          .received_items()
-          .iter()
-          .filter_map(|i| APItem::try_from(i.item().id()).ok())
-          .collect();
-        let weapons: Vec<_> = initial_items.iter().filter_map(|i| i.as_weapon()).collect();
-        let bodies: Vec<_> = initial_items.iter().filter_map(|i| i.as_body()).collect();
-        let engines: Vec<_> = initial_items.iter().filter_map(|i| i.as_engine()).collect();
-
-        println!(
-          "Setting initial build {:?} {:?} {:?} {:?}",
-          initial_items, weapons, bodies, engines
-        );
-        stats.set_initial_parts(weapons.as_slice(), bodies.as_slice(), engines.as_slice());
+        let mut game_connected = GameConnected { client, stats };
+        game_connected.update_unlocks();
+        game_connected.set_default_loadout();
 
         // finish transition
-        *state = GameState::Connected(GameConnected { client, stats });
+        *state = GameState::Connected(game_connected);
 
         println!("Successfully initialized game state");
       }

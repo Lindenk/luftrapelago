@@ -14,7 +14,7 @@ unsafe extern "C" fn stub_set_achievement(
   // Return true so the game thinks the achievement unlocked successfully
   true
 }
-unsafe extern "C" fn stub_store_stats(this_ptr: *mut std::ffi::c_void) -> bool {
+unsafe extern "C" fn stub_store_stats(_this_ptr: *mut std::ffi::c_void) -> bool {
   println!("Blocked Steam StoreStats call.");
   // Return true so the game believes the save/store operation succeeded
   true

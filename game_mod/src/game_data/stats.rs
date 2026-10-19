@@ -158,26 +158,13 @@ impl GlobalStats {
     self.write_player_stats(PlayerOffsets::UnlockedParts, parts);
   }
 
-  pub fn set_initial_parts(
-    &self,
-    weapons: &[WeaponType],
-    bodies: &[BodyType],
-    engines: &[EngineType],
-  ) {
-    self.set_unlocked_parts(weapons, bodies, engines);
-
-    // find first part of each and set that as the current loadout
-    if let Some(w) = weapons.iter().next() {
-      self.write_player_stats(PlayerOffsets::EquippedWeapon, (*w as u8));
-    }
-    if let Some(b) = bodies.iter().next() {
-      self.write_player_stats(PlayerOffsets::EquippedBody, (*b as u8));
-    }
-    if let Some(e) = engines.iter().next() {
-      self.write_player_stats(PlayerOffsets::EquippedEngine, (*e as u8));
-    }
+  pub fn set_parts(&self, weapon: WeaponType, body: BodyType, engine: EngineType) {
+    self.write_player_stats(PlayerOffsets::EquippedWeapon, weapon as u8);
+    self.write_player_stats(PlayerOffsets::EquippedBody, body as u8);
+    self.write_player_stats(PlayerOffsets::EquippedEngine, engine as u8);
   }
 
+  /*
   pub fn unlock_weapon(&self, weapon: WeaponType) {
     let mask = 1 << (weapon as u8);
     self.modify_player_stats(PlayerOffsets::UnlockedParts, |v: u32| v | mask);
@@ -191,7 +178,7 @@ impl GlobalStats {
     let mut mask = 1 << (engine as u8);
     mask <<= 16;
     self.modify_player_stats(PlayerOffsets::UnlockedParts, |v: u32| v | mask);
-  }
+  }*/
 
   pub fn clear_game_unlock_buffer(&self) {
     self.write_player_stats(PlayerOffsets::QueuedNotifications, 0u32);
