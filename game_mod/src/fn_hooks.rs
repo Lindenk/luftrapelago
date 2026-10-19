@@ -96,6 +96,8 @@ macro_rules! define_external_detour_hooks {
 define_detour_hooks! {
   pub static Entry: extern "C" fn() -> () => 0x1dc925;
   pub static MasterGameInit: extern "stdcall" fn(*mut std::ffi::c_void) -> () => 0x9d8b0;
+  pub static ResultsScreen: extern "fastcall" fn(*mut std::ffi::c_void) -> () => 0xeb4f0;
+  pub static DisplayUnlocks: extern "fastcall" fn(*mut std::ffi::c_void) -> () => 0xb5310;
 }
 
 define_external_detour_hooks! {

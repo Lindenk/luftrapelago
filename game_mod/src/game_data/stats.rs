@@ -39,7 +39,7 @@ enum GlobalStatsOffsets {
 #[repr(usize)]
 #[derive(Copy, Clone)]
 enum PlayerOffsets {
-  CurrentScore = 0x18, // ?
+  QueuedNotifications = 0x18, // ?
   GamesPlayed = 0x20,
   TotalScore = 0x24,
   EquippedBody = 0x2c,   // 8-bit int, counter starting at 0
@@ -58,6 +58,10 @@ enum PlayerOffsets {
   TotalFightersKilled = 0x8c,
   // ...
   MissionStart = 0xc8,
+
+  UnlockBuffer1 = 0x2770,
+  UnlockBuffer2 = 0x2774,
+  UnlockBuffer3 = 0x2778,
 }
 
 impl GlobalStats {
@@ -132,7 +136,7 @@ impl GlobalStats {
     self.write_global_stats(GlobalStatsOffsets::EnableHangar, 1u8);
   }
 
-  pub fn set_initial_parts(
+  pub fn set_unlocked_parts(
     &self,
     weapons: &[WeaponType],
     bodies: &[BodyType],
@@ -152,6 +156,15 @@ impl GlobalStats {
     }
 
     self.write_player_stats(PlayerOffsets::UnlockedParts, parts);
+  }
+
+  pub fn set_initial_parts(
+    &self,
+    weapons: &[WeaponType],
+    bodies: &[BodyType],
+    engines: &[EngineType],
+  ) {
+    self.set_unlocked_parts(weapons, bodies, engines);
 
     // find first part of each and set that as the current loadout
     if let Some(w) = weapons.iter().next() {
@@ -178,6 +191,13 @@ impl GlobalStats {
     let mut mask = 1 << (engine as u8);
     mask <<= 16;
     self.modify_player_stats(PlayerOffsets::UnlockedParts, |v: u32| v | mask);
+  }
+
+  pub fn clear_game_unlock_buffer(&self) {
+    self.write_player_stats(PlayerOffsets::QueuedNotifications, 0u32);
+    self.write_player_stats(PlayerOffsets::UnlockBuffer1, 0u32);
+    self.write_player_stats(PlayerOffsets::UnlockBuffer2, 0u32);
+    self.write_player_stats(PlayerOffsets::UnlockBuffer3, 0u32);
   }
 
   //pub fn is_mission_completed(&self, mission_num: u8, part_num: u8, part_type: u8) -> bool {

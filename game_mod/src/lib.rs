@@ -13,8 +13,8 @@ use windows::Win32::System::SystemServices::DLL_PROCESS_ATTACH;
 use crate::archipelago::client::APClient;
 use crate::fn_hooks::EntryHook;
 use crate::hooks::{
-  disable_steam_achievements, disable_tutorial, init_game_stats, initialize_window_hooks,
-  redirect_saves,
+  disable_game_unlocks, disable_steam_achievements, disable_tutorial, init_game_stats,
+  initialize_window_hooks, redirect_saves,
 };
 use crate::state::{GAME_STATE, GameInitializing};
 
@@ -47,6 +47,7 @@ pub fn hook_entry() {
       // setup remaining hooks
       init_game_stats();
       disable_tutorial();
+      disable_game_unlocks();
 
       // update our state
       let mut state = GAME_STATE.lock().unwrap();
