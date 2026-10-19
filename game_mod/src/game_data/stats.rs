@@ -158,10 +158,45 @@ impl GlobalStats {
     self.write_player_stats(PlayerOffsets::UnlockedParts, parts);
   }
 
+  pub fn is_weapon_unlocked(&self, weapon: WeaponType) -> bool {
+    let unlocks: u32 = self.read_player_stats(PlayerOffsets::UnlockedParts);
+    let unlocks = (unlocks & 0x3f) as u8; // mask out weapon unlocks
+
+    let mask = 1 << (weapon as u8);
+    (unlocks & mask) > 0
+  }
+  pub fn is_body_unlocked(&self, body: BodyType) -> bool {
+    let unlocks: u32 = self.read_player_stats(PlayerOffsets::UnlockedParts);
+    let unlocks = ((unlocks >> 8) & 0x3f) as u8; // mask out body unlocks
+
+    let mask = 1 << (body as u8);
+    (unlocks & mask) > 0
+  }
+  pub fn is_engine_unlocked(&self, engine: EngineType) -> bool {
+    let unlocks: u32 = self.read_player_stats(PlayerOffsets::UnlockedParts);
+    let unlocks = ((unlocks >> 16) & 0x3f) as u8; // mask out egnine unlocks
+
+    let mask = 1 << (engine as u8);
+    (unlocks & mask) > 0
+  }
+
   pub fn set_parts(&self, weapon: WeaponType, body: BodyType, engine: EngineType) {
     self.write_player_stats(PlayerOffsets::EquippedWeapon, weapon as u8);
     self.write_player_stats(PlayerOffsets::EquippedBody, body as u8);
     self.write_player_stats(PlayerOffsets::EquippedEngine, engine as u8);
+  }
+
+  pub fn get_equipped_weapon(&self) -> Option<WeaponType> {
+    let w: u8 = self.read_player_stats(PlayerOffsets::EquippedWeapon);
+    WeaponType::try_from(w).ok()
+  }
+  pub fn get_equipped_body(&self) -> Option<BodyType> {
+    let b: u8 = self.read_player_stats(PlayerOffsets::EquippedBody);
+    BodyType::try_from(b).ok()
+  }
+  pub fn get_equipped_engine(&self) -> Option<EngineType> {
+    let e: u8 = self.read_player_stats(PlayerOffsets::EquippedEngine);
+    EngineType::try_from(e).ok()
   }
 
   /*
