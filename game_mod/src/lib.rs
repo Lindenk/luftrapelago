@@ -1,7 +1,8 @@
 mod archipelago;
 mod fn_hooks;
 mod game_data;
-mod hooks;
+mod mods;
+mod patcher;
 mod state;
 mod util;
 mod version_stub;
@@ -11,12 +12,15 @@ use windows::Win32::Foundation::HMODULE;
 use windows::Win32::System::SystemServices::DLL_PROCESS_ATTACH;
 
 use crate::archipelago::client::APClient;
-use crate::fn_hooks::EntryHook;
-use crate::hooks::{
-  disable_game_unlocks, disable_steam_achievements, disable_tutorial, fix_hangar_screen,
-  init_game_stats, initialize_window_hooks, redirect_saves,
+use crate::mods::{
+  disable_game_unlocks, disable_steam_achievements, disable_tutorial, draw_mission_hints,
+  fix_hangar_screen, init_game_stats, redirect_saves,
 };
 use crate::state::{GAME_STATE, GameInitializing};
+
+define_detour_hooks! {
+  static Entry: extern "C" fn() -> () => 0x1dc925;
+}
 
 #[unsafe(no_mangle)]
 pub extern "system" fn DllMain(
@@ -49,6 +53,7 @@ pub fn hook_entry() {
       disable_tutorial();
       disable_game_unlocks();
       fix_hangar_screen();
+      draw_mission_hints();
 
       // update our state
       let mut state = GAME_STATE.lock().unwrap();

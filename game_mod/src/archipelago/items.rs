@@ -1,6 +1,6 @@
 use crate::game_data::plane::{BodyType, EngineType, WeaponType};
 
-const BASE_ID: i64 = 0x1f700000;
+pub const BASE_ID: i64 = 0x1f700000;
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, PartialOrd, Ord)]
 pub enum APItem {

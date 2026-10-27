@@ -1,5 +1,4 @@
 use std::{
-  collections::HashSet,
   io::{self, Write},
   time::Duration,
 };
@@ -21,7 +20,12 @@ impl APClient {
     N: Into<Ustr>,
     P: Into<String>,
   {
-    let mut options = ConnectionOptions::default().tags(["DEATH_LINK"]);
+    let mut options = ConnectionOptions::default()
+      .tags(["DEATH_LINK"])
+      .receive_items(archipelago_rs::ItemHandling::OtherWorlds {
+        own_world: true,
+        starting_inventory: true,
+      });
     if let Some(pass) = pass {
       options = options.password(pass);
     }
@@ -37,7 +41,7 @@ impl APClient {
     let mut connection = loop {
       //let (server, slot, password) = Self::console_prompt();
       let (server, slot, password) = (
-        "localhost:62802".to_string(),
+        "localhost:63187".to_string(),
         "Pineapple_LRS".to_string(),
         "".to_string(),
       );

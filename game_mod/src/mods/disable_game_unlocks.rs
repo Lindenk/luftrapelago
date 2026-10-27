@@ -1,7 +1,7 @@
 use crate::{
   fn_hooks::get_base_address,
+  patcher::CodePatch,
   state::{GAME_STATE, GameState},
-  util::patch_fn_call_with_jump,
 };
 
 pub fn disable_game_unlocks() {
@@ -12,7 +12,12 @@ pub fn disable_game_unlocks() {
   unsafe {
     let addr = (get_base_address() + 0xee19d) as *mut u8;
     let dest_addr = (get_base_address() + 0xee32c) as *mut u8;
-    patch_fn_call_with_jump(addr, rewrite_unlocks, dest_addr);
+    //patch_fn_call_with_jump(addr, rewrite_unlocks, dest_addr);
+
+    CodePatch::at(addr)
+      .payload(rewrite_unlocks as extern "C" fn())
+      .continuation(dest_addr)
+      .write();
   }
 }
 

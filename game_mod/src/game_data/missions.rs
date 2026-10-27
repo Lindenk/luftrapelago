@@ -1,3 +1,5 @@
+// Save this for later for missionsanity
+
 pub enum PlanePartType {
   Weapon = 0,
   Body = 1,

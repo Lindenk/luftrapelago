@@ -1,4 +1,4 @@
-#![allow(unused)]
+//! Macros for hooking game functions
 
 use std::sync::OnceLock;
 use windows::Win32::System::LibraryLoader::GetModuleHandleA;
@@ -30,7 +30,7 @@ macro_rules! define_detour_hooks {
         // Provide repetative helper fns
         impl [<$name Hook>] {
           pub fn get_fn_address() -> usize {
-            get_base_address() + $offset
+            crate::fn_hooks::get_base_address() + $offset
           }
           pub fn get_fn() -> [<$name Fn>] {
             let target_fn_addr = Self::get_fn_address();
@@ -91,15 +91,4 @@ macro_rules! define_external_detour_hooks {
       )*
     }
   };
-}
-
-define_detour_hooks! {
-  pub static Entry: extern "C" fn() -> () => 0x1dc925;
-  pub static MasterGameInit: extern "stdcall" fn(*mut std::ffi::c_void) -> () => 0x9d8b0;
-  pub static ResultsScreen: extern "fastcall" fn(*mut std::ffi::c_void) -> () => 0xeb4f0;
-  pub static DisplayUnlocks: extern "fastcall" fn(*mut std::ffi::c_void) -> () => 0xb5310;
-}
-
-define_external_detour_hooks! {
-  pub static SteamUserStats from "steam_api.dll" => "SteamUserStats" : extern "C" fn() -> *mut *mut std::ffi::c_void;
 }

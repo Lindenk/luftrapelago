@@ -1,4 +1,4 @@
-use crate::{fn_hooks::get_base_address, util::patch_memory};
+use crate::{fn_hooks::get_base_address, patcher::patch_memory};
 
 pub fn disable_tutorial() {
   // patch out the check that triggers it

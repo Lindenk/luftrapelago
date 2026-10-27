@@ -1,6 +1,25 @@
-use std::{collections::HashMap, sync::LazyLock};
-
 use num_enum::TryFromPrimitive;
+
+use crate::archipelago::items::APItem;
+
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, PartialOrd, Ord)]
+pub enum Part {
+  Weapon(WeaponType),
+  Body(BodyType),
+  Engine(EngineType),
+}
+
+impl TryFrom<APItem> for Part {
+  type Error = ();
+  fn try_from(value: APItem) -> Result<Self, Self::Error> {
+    match value {
+      APItem::Weapon(w) => Ok(Self::Weapon(w)),
+      APItem::Body(b) => Ok(Self::Body(b)),
+      APItem::Engine(e) => Ok(Self::Engine(e)),
+      _ => Err(()),
+    }
+  }
+}
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, PartialOrd, Ord, TryFromPrimitive)]
 #[repr(u8)]
@@ -35,6 +54,7 @@ pub enum EngineType {
   URauser = 5,
 }
 
+/*
 #[derive(Debug, Hash, Eq, PartialEq, PartialOrd, Ord)]
 pub struct PlaneConfig {
   weapon: WeaponType,
@@ -71,6 +91,8 @@ impl PlaneConfig {
 }
 
 // Map plane name combos to their parts
+// TODO: Load this from json in the apworld dir
+
 const PARTS_TO_PLANE_NAME: LazyLock<HashMap<u32, &'static str>> = LazyLock::new(|| {
   PLANE_NAME_TO_PARTS
     .iter()
@@ -207,3 +229,4 @@ const PLANE_NAME_TO_PARTS: LazyLock<HashMap<&'static str, u32>> = LazyLock::new(
     ("urauser", 0x05_05_05),
   ])
 });
+*/

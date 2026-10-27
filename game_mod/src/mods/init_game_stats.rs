@@ -1,11 +1,14 @@
 use std::mem;
 
 use crate::{
-  archipelago::items::APItem,
-  fn_hooks::MasterGameInitHook,
+  define_detour_hooks,
   game_data::stats::GlobalStats,
   state::{GAME_STATE, GameConnected, GameState},
 };
+
+define_detour_hooks! {
+  static MasterGameInit: extern "stdcall" fn(*mut std::ffi::c_void) -> () => 0x9d8b0;
+}
 
 pub fn init_game_stats() {
   // hook right after the game successfully loads it's save file and grab

@@ -116,15 +116,15 @@ class LuftrausersWorld(World):
         # give the player a starting plane
         starting_parts = []
         if options.randomize_starting_loadout:
-            weapon = lr_names.WeaponNames.iter()
+            weapon = list(lr_names.WeaponNames)
             weapon.remove(lr_names.WeaponNames.URauserWeapon)
             starting_parts.append(random.choice(weapon))
 
-            body = lr_names.BodyNames.iter()
+            body = list(lr_names.BodyNames)
             body.remove(lr_names.BodyNames.URauserBody)
             starting_parts.append(random.choice(body))
 
-            engine = lr_names.EngineNames.iter()
+            engine = list(lr_names.EngineNames)
             engine.remove(lr_names.EngineNames.URauserEngine)
             starting_parts.append(random.choice(engine))
         else:
@@ -201,9 +201,9 @@ class LuftrausersWorld(World):
                 )
 
         # plane completions
-        weapon_names = lr_names.WeaponNames.iter()
-        body_names = lr_names.BodyNames.iter()
-        engine_names = lr_names.EngineNames.iter()
+        weapon_names = list(lr_names.WeaponNames)
+        body_names = list(lr_names.BodyNames)
+        engine_names = list(lr_names.EngineNames)
         for name, build in lr_names.unique_planes.items():
             add_rule(
                 self.get_location(name),

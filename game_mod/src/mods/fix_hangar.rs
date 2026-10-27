@@ -1,8 +1,8 @@
 use crate::{
   fn_hooks::get_base_address,
   game_data::plane::{BodyType, EngineType, WeaponType},
+  patcher::patch_memory,
   state::{GAME_STATE, GameState},
-  util::{patch_fn_call, patch_fn_call_with_jump, patch_memory},
 };
 
 // By default the game expects unlocked parts to be sequantial, and will
@@ -35,9 +35,9 @@ pub fn fix_hangar_screen() {
     // same logic but with an additional check for if the selected parts are
     // also unlocked
     {
-      let START = get_base_address() + 0x73e54;
-      let TRUE_BRANCH = get_base_address() + 0x73e95;
-      let FALSE_BRANCH = get_base_address() + 0x73f0f;
+      let patch_start = get_base_address() + 0x73e54;
+      let patch_true_branch = get_base_address() + 0x73e95;
+      let patch_false_branch = get_base_address() + 0x73f0f;
       let mut patch_bytes = vec![
         // runs on both branches, just handle it now
         0x8a, 0x8b, 0xb8, 0x01, 0x00, 0x00, // load stack var
@@ -45,8 +45,8 @@ pub fn fix_hangar_screen() {
         0x53, // pass in the host function's param_1
         0xb8, // MOV EAX, imm32 (setup the function call)
       ];
-      // patch in our check
-      let func_addr = check_valid_build as usize as u32;
+      // patch in our check (rust complains if I make this readable)
+      let func_addr = check_valid_build as extern "C" fn(*const u8) -> bool as usize as u32;
       patch_bytes.extend_from_slice(&func_addr.to_le_bytes());
 
       // result is in AL, patch in branch
@@ -71,21 +71,21 @@ pub fn fix_hangar_screen() {
 
       // write in our true branch
       patch_bytes.extend_from_slice(&post_branch_setup);
-      let true_branch_offset = (TRUE_BRANCH - (START + patch_bytes.len() + 5)) as i32;
+      let true_branch_offset = (patch_true_branch - (patch_start + patch_bytes.len() + 5)) as i32;
       patch_bytes.push(0xe9); // jmp
       patch_bytes.extend(true_branch_offset.to_le_bytes());
 
       // write in our false branch
       patch_bytes.extend_from_slice(&post_branch_setup);
-      let false_branch_offset = (FALSE_BRANCH - (START + patch_bytes.len() + 5)) as i32;
+      let false_branch_offset = (patch_false_branch - (patch_start + patch_bytes.len() + 5)) as i32;
       patch_bytes.push(0xe9); // jmp
       patch_bytes.extend(false_branch_offset.to_le_bytes());
 
       // sanity check
-      assert!((FALSE_BRANCH > (START + patch_bytes.len())));
+      assert!((patch_false_branch > (patch_start + patch_bytes.len())));
 
       // write our patch in
-      patch_memory(START as *mut u8, &patch_bytes);
+      patch_memory(patch_start as *mut u8, &patch_bytes);
     }
   }
 }

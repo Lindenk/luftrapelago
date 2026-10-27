@@ -1,4 +1,8 @@
-use crate::{fn_hooks::SteamUserStatsHook, util::patch_memory};
+use crate::{define_external_detour_hooks, patcher::patch_memory};
+
+define_external_detour_hooks! {
+  static SteamUserStats from "steam_api.dll" => "SteamUserStats" : extern "C" fn() -> *mut *mut std::ffi::c_void;
+}
 
 // Define our custom stub function with the correct calling convention (__thiscall / extern "C" with explicit this pointer)
 // Steamworks SDK functions use __thiscall on Windows, which passes the interface pointer (`this`) in ECX.

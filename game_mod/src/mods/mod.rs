@@ -3,6 +3,7 @@ mod disable_steam_achievements;
 mod disable_tutorial;
 mod fix_hangar;
 mod init_game_stats;
+mod mission_hints;
 mod redirect_saves;
 mod sdl_fixes;
 
@@ -11,5 +12,6 @@ pub use disable_steam_achievements::*;
 pub use disable_tutorial::*;
 pub use fix_hangar::*;
 pub use init_game_stats::*;
+pub use mission_hints::*;
 pub use redirect_saves::*;
 pub use sdl_fixes::*;

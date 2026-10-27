@@ -3,7 +3,7 @@ use std::sync::OnceLock;
 use windows::Win32::Foundation::{BOOL, HMODULE};
 use windows::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryA};
 
-// 1. Define function signatures (ANSI and Wide)
+// stub the functions the game actually calls
 type GetFileVersionInfoAFn =
   unsafe extern "system" fn(*const c_char, u32, u32, *mut c_void) -> BOOL;
 type GetFileVersionInfoSizeAFn = unsafe extern "system" fn(*const c_char, *mut u32) -> u32;
@@ -15,7 +15,6 @@ type GetFileVersionInfoSizeWFn = unsafe extern "system" fn(*const u16, *mut u32)
 type VerQueryValueWFn =
   unsafe extern "system" fn(*const c_void, *const u16, *mut *mut c_void, *mut u32) -> BOOL;
 
-// 2. Struct to hold the cached real module handle and function pointers
 struct RealVersionDll {
   _handle: HMODULE,
   get_file_version_info_a: Option<GetFileVersionInfoAFn>,
@@ -31,45 +30,37 @@ unsafe impl Sync for RealVersionDll {}
 
 static REAL_VERSION: OnceLock<RealVersionDll> = OnceLock::new();
 
-// 3. Initialize once on first use
 fn get_real_version() -> &'static RealVersionDll {
-  REAL_VERSION.get_or_init(|| {
-    unsafe {
-      // Absolute path to system version.dll to prevent recursion
-      let path = c"C:\\Windows\\System32\\version.dll";
-      let handle = LoadLibraryA(windows::core::PCSTR(path.as_ptr() as *const u8))
-        .expect("Failed to load system version.dll");
+  REAL_VERSION.get_or_init(|| unsafe {
+    let path = c"C:\\Windows\\System32\\version.dll";
+    let handle = LoadLibraryA(windows::core::PCSTR(path.as_ptr() as *const u8))
+      .expect("Failed to load system version.dll");
 
-      let get_info_a = GetProcAddress(handle, windows::core::s!("GetFileVersionInfoA"))
-        .map(|addr| std::mem::transmute(addr));
-      let get_size_a = GetProcAddress(handle, windows::core::s!("GetFileVersionInfoSizeA"))
-        .map(|addr| std::mem::transmute(addr));
-      let query_val_a = GetProcAddress(handle, windows::core::s!("VerQueryValueA"))
-        .map(|addr| std::mem::transmute(addr));
+    let get_info_a = GetProcAddress(handle, windows::core::s!("GetFileVersionInfoA"))
+      .map(|addr| std::mem::transmute(addr));
+    let get_size_a = GetProcAddress(handle, windows::core::s!("GetFileVersionInfoSizeA"))
+      .map(|addr| std::mem::transmute(addr));
+    let query_val_a = GetProcAddress(handle, windows::core::s!("VerQueryValueA"))
+      .map(|addr| std::mem::transmute(addr));
 
-      let get_info_w = GetProcAddress(handle, windows::core::s!("GetFileVersionInfoW"))
-        .map(|addr| std::mem::transmute(addr));
-      let get_size_w = GetProcAddress(handle, windows::core::s!("GetFileVersionInfoSizeW"))
-        .map(|addr| std::mem::transmute(addr));
-      let query_val_w = GetProcAddress(handle, windows::core::s!("VerQueryValueW"))
-        .map(|addr| std::mem::transmute(addr));
+    let get_info_w = GetProcAddress(handle, windows::core::s!("GetFileVersionInfoW"))
+      .map(|addr| std::mem::transmute(addr));
+    let get_size_w = GetProcAddress(handle, windows::core::s!("GetFileVersionInfoSizeW"))
+      .map(|addr| std::mem::transmute(addr));
+    let query_val_w = GetProcAddress(handle, windows::core::s!("VerQueryValueW"))
+      .map(|addr| std::mem::transmute(addr));
 
-      RealVersionDll {
-        _handle: handle,
-        get_file_version_info_a: get_info_a,
-        get_file_version_info_size_a: get_size_a,
-        ver_query_value_a: query_val_a,
-        get_file_version_info_w: get_info_w,
-        get_file_version_info_size_w: get_size_w,
-        ver_query_value_w: query_val_w,
-      }
+    RealVersionDll {
+      _handle: handle,
+      get_file_version_info_a: get_info_a,
+      get_file_version_info_size_a: get_size_a,
+      ver_query_value_a: query_val_a,
+      get_file_version_info_w: get_info_w,
+      get_file_version_info_size_w: get_size_w,
+      ver_query_value_w: query_val_w,
     }
   })
 }
-
-// ==========================================
-// EXPORTED PROXY STUBS (ANSI & WIDE)
-// ==========================================
 
 #[unsafe(no_mangle)]
 #[allow(non_snake_case)]
