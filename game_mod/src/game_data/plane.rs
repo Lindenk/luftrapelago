@@ -9,6 +9,22 @@ pub enum Part {
   Engine(EngineType),
 }
 
+impl From<WeaponType> for Part {
+  fn from(value: WeaponType) -> Self {
+    Self::Weapon(value)
+  }
+}
+impl From<BodyType> for Part {
+  fn from(value: BodyType) -> Self {
+    Self::Body(value)
+  }
+}
+impl From<EngineType> for Part {
+  fn from(value: EngineType) -> Self {
+    Self::Engine(value)
+  }
+}
+
 impl TryFrom<APItem> for Part {
   type Error = ();
   fn try_from(value: APItem) -> Result<Self, Self::Error> {
@@ -32,6 +48,16 @@ pub enum WeaponType {
   URauser = 5,
 }
 
+impl TryFrom<Part> for WeaponType {
+  type Error = ();
+  fn try_from(value: Part) -> Result<Self, Self::Error> {
+    match value {
+      Part::Weapon(w) => Ok(w),
+      _ => Err(()),
+    }
+  }
+}
+
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, PartialOrd, Ord, TryFromPrimitive)]
 #[repr(u8)]
 pub enum BodyType {
@@ -41,6 +67,15 @@ pub enum BodyType {
   Nuke = 3,
   Bomb = 4,
   URauser = 5,
+}
+impl TryFrom<Part> for BodyType {
+  type Error = ();
+  fn try_from(value: Part) -> Result<Self, Self::Error> {
+    match value {
+      Part::Body(b) => Ok(b),
+      _ => Err(()),
+    }
+  }
 }
 
 #[derive(Debug, Hash, Eq, Clone, Copy, PartialEq, PartialOrd, Ord, TryFromPrimitive)]
@@ -52,6 +87,15 @@ pub enum EngineType {
   Underwater = 3,
   Hover = 4,
   URauser = 5,
+}
+impl TryFrom<Part> for EngineType {
+  type Error = ();
+  fn try_from(value: Part) -> Result<Self, Self::Error> {
+    match value {
+      Part::Engine(e) => Ok(e),
+      _ => Err(()),
+    }
+  }
 }
 
 /*

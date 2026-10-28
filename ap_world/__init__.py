@@ -1,4 +1,3 @@
-import random
 from typing import Any, ClassVar, cast
 
 from BaseClasses import Item, ItemClassification, MultiWorld, Region, Tutorial
@@ -56,6 +55,7 @@ class LuftrausersWorld(World):
         super().__init__(multiworld, player)
 
         self.excluded_locations: list[str] = []
+        self.unique_completion_locations: list[str] = []
 
     def generate_early(self) -> None:
         options: LuftrausersOptions = cast(LuftrausersOptions, self.options)
@@ -65,8 +65,17 @@ class LuftrausersWorld(World):
         if options.use_unique_completion_checks:
             # don't use generic locations
             self.excluded_locations.extend(lr_names.generic_completions)
+
+            # add in random unique completions up to the set amount
+            completions = [c.name for c in unique_completion_locations]
+            self.random.shuffle(completions)
+            self.unique_completion_locations.extend(completions[:options.required_unique_planes])
+            self.excluded_locations.extend(completions[options.required_unique_planes:])
         else:
-            # remove all completions past the goal completion
+            # allow all unique completions (because they'll just give tokens used for
+            #   the real checks)
+            self.unique_completion_locations.extend([c.name for c in unique_completion_locations])
+            # add in generic completions up to what's set in options
             self.excluded_locations.extend(lr_names.generic_completions[options.required_unique_planes :])
 
     def create_regions(self) -> None:
@@ -118,15 +127,15 @@ class LuftrausersWorld(World):
         if options.randomize_starting_loadout:
             weapon = list(lr_names.WeaponNames)
             weapon.remove(lr_names.WeaponNames.URauserWeapon)
-            starting_parts.append(random.choice(weapon))
+            starting_parts.append(self.random.choice(weapon))
 
             body = list(lr_names.BodyNames)
             body.remove(lr_names.BodyNames.URauserBody)
-            starting_parts.append(random.choice(body))
+            starting_parts.append(self.random.choice(body))
 
             engine = list(lr_names.EngineNames)
             engine.remove(lr_names.EngineNames.URauserEngine)
-            starting_parts.append(random.choice(engine))
+            starting_parts.append(self.random.choice(engine))
         else:
             starting_parts = [
                 lr_names.WeaponNames.OriginalWeapon,
@@ -164,7 +173,7 @@ class LuftrausersWorld(World):
 
         filler_names = list(options.filler_weights.keys())
         filler_weights = list(options.filler_weights.values())
-        filler_items = random.choices(population=filler_names, weights=filler_weights, k=total_filler)
+        filler_items = self.random.choices(population=filler_names, weights=filler_weights, k=total_filler)
 
         filler_map = {
             "Patch Up": lr_names.Filler.Patchup,
@@ -205,6 +214,10 @@ class LuftrausersWorld(World):
         body_names = list(lr_names.BodyNames)
         engine_names = list(lr_names.EngineNames)
         for name, build in lr_names.unique_planes.items():
+            # skip any that aren't in this world
+            if name not in self.unique_completion_locations:
+              continue
+
             add_rule(
                 self.get_location(name),
                 lambda state, build=build: state.has_all(
@@ -251,6 +264,13 @@ class LuftrausersWorld(World):
                 ),
             )
         elif options.goal in [1, 2, 3]:  # Unique 'completions'
+            if options.use_unique_completion_checks:
+              pass
+            else:
+              loc = self.get_location(lr_names.VictoryLocations.FinishedUniqueCompletions)
+              add_rule(loc, lambda state: state.has(lr_names.MiscItems.CompletionToken, self.player,
+                count=int(options.required_unique_planes)))
+
             loc_completion = lr_names.generic_completions[options.required_unique_planes - 1]
             loc = self.get_location(lr_names.VictoryLocations.FinishedUniqueCompletions)
             add_rule(loc, lambda state: state.can_reach_location(loc_completion, self.player))
@@ -262,8 +282,8 @@ class LuftrausersWorld(World):
                 lambda state: state.has_all_counts(
                     {
                         lr_names.Bonuses.PowerupDamage: int(options.powerup_damage),
-                        lr_names.Bonuses.PowerupDamage: int(options.powerup_health),
-                        lr_names.Bonuses.PowerupDamage: int(options.powerup_fire_rate),
+                        lr_names.Bonuses.PowerupHealth: int(options.powerup_health),
+                        lr_names.Bonuses.PowerupFireRate: int(options.powerup_fire_rate),
                     },
                     self.player,
                 ),

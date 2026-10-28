@@ -7,7 +7,10 @@ use archipelago_rs::{self as ap_rs, ConnectionOptions, ConnectionState};
 use ustr::Ustr;
 use windows::Win32::System::Console::{AllocConsole, FreeConsole};
 
-use crate::archipelago::slot::SlotData;
+use crate::{
+  archipelago::{items::APItem, slot::SlotData},
+  game_data::plane::Part,
+};
 
 pub struct APClient {
   connection: ap_rs::Connection<SlotData>,
@@ -134,15 +137,17 @@ impl APClient {
     }
   }
 
-  pub fn update(&mut self) {
-    let events = self.connection.update();
-
-    //self.client().
-    //
-    //for e in events {
-    //  match e {
-    //    Event::ReceivedItems(id) => self.items,
-    //  }
-    //}
+  // utility functions
+  pub fn get_items(&self) -> impl Iterator<Item = APItem> {
+    self
+      .connection
+      .client()
+      .unwrap()
+      .received_items()
+      .iter()
+      .filter_map(|i| APItem::try_from(i.item().id()).ok())
+  }
+  pub fn get_parts(&self) -> impl Iterator<Item = Part> {
+    self.get_items().filter_map(|i| Part::try_from(i).ok())
   }
 }

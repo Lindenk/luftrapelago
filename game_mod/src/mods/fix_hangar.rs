@@ -1,8 +1,8 @@
 use crate::{
-  fn_hooks::get_base_address,
-  game_data::plane::{BodyType, EngineType, WeaponType},
+  fn_hook::get_base_address,
+  game_data::plane::{BodyType, EngineType, Part, WeaponType},
   patcher::patch_memory,
-  state::{GAME_STATE, GameState},
+  state::GameState,
 };
 
 // By default the game expects unlocked parts to be sequantial, and will
@@ -91,63 +91,57 @@ pub fn fix_hangar_screen() {
 }
 
 extern "C" fn check_valid_build(hangar_data: *const u8) -> bool {
-  let mut state = GAME_STATE.lock().unwrap();
-  if let GameState::Connected(state) = &mut *state {
-    let stats = state.stats;
+  let unlocked_parts: Vec<_> = GameState::with(|client, _| client.get_parts().collect())
+    .expect("Somehow we checked the hangar build without an ap client!");
 
-    println!("Pointer received from fn: {:x}", hangar_data as usize);
+  //println!("Pointer received from fn: {:x}", hangar_data as usize);
 
-    let parts = {
-      let w = WeaponType::try_from(unsafe {
-        hangar_data
-          .byte_offset(0x1b8)
-          .read_volatile()
-          .wrapping_sub(1)
-      })
-      .ok();
-      let b = BodyType::try_from(unsafe {
-        hangar_data
-          .byte_offset(0x1b9)
-          .read_volatile()
-          .wrapping_sub(1)
-      })
-      .ok();
-      let e = EngineType::try_from(unsafe {
-        hangar_data
-          .byte_offset(0x1ba)
-          .read_volatile()
-          .wrapping_sub(1)
-      })
-      .ok();
-      (w, b, e)
-    };
+  let parts = {
+    let w = WeaponType::try_from(unsafe {
+      hangar_data
+        .byte_offset(0x1b8)
+        .read_volatile()
+        .wrapping_sub(1)
+    })
+    .ok();
+    let b = BodyType::try_from(unsafe {
+      hangar_data
+        .byte_offset(0x1b9)
+        .read_volatile()
+        .wrapping_sub(1)
+    })
+    .ok();
+    let e = EngineType::try_from(unsafe {
+      hangar_data
+        .byte_offset(0x1ba)
+        .read_volatile()
+        .wrapping_sub(1)
+    })
+    .ok();
+    (w, b, e)
+  };
 
-    let is_valid = match parts {
-      (Some(w), Some(b), Some(e)) => {
-        println!("Parts selected: {:?}, {:?}, {:?}", w, b, e);
+  match parts {
+    (Some(w), Some(b), Some(e)) => {
+      //println!("Parts selected: {:?}, {:?}, {:?}", w, b, e);
 
-        // make sure all parts selected are unlocked
-        let is_unlocked =
-          stats.is_weapon_unlocked(w) && stats.is_body_unlocked(b) && stats.is_engine_unlocked(e);
-        // make sure we have either selected all urauser parts or none
-        let is_valid_urauser = match (w, b, e) {
-          (WeaponType::URauser, BodyType::URauser, EngineType::URauser) => true,
-          (WeaponType::URauser, _, _) => false,
-          (_, BodyType::URauser, _) => false,
-          (_, _, EngineType::URauser) => false,
-          _ => true,
-        };
-        is_unlocked && is_valid_urauser
-      }
-      _ => {
-        println!("Failed to get valid parts!");
-        false
-      }
-    };
-
-    is_valid
-  } else {
-    println!("Failed to get state while exiting hangar edit!");
-    false
+      // make sure all parts selected are unlocked
+      let is_unlocked = [Part::from(w), Part::from(b), Part::from(e)]
+        .iter()
+        .all(|p| unlocked_parts.contains(p));
+      // make sure we have either selected all urauser parts or none
+      let is_valid_urauser = match (w, b, e) {
+        (WeaponType::URauser, BodyType::URauser, EngineType::URauser) => true,
+        (WeaponType::URauser, _, _) => false,
+        (_, BodyType::URauser, _) => false,
+        (_, _, EngineType::URauser) => false,
+        _ => true,
+      };
+      is_unlocked && is_valid_urauser
+    }
+    _ => {
+      println!("Failed to get valid parts!");
+      false
+    }
   }
 }

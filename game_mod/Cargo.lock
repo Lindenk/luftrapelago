@@ -26,8 +26,7 @@ dependencies = [
 [[package]]
 name = "archipelago_rs"
 version = "3.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f824b6faac01bc5bc1c4abfbe7fe8e81463033d0ebc63d7c9fa43d084695340a"
+source = "git+ssh://git@github.com/Lindenk/archipelago_rs.git?branch=feature%2Ftracked-scouted-locations#ac827a2ded980691b976a6cb44928748f7de7b61"
 dependencies = [
  "bitflags 2.13.2",
  "log",

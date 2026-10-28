@@ -1,4 +1,4 @@
-use crate::{fn_hooks::get_base_address, patcher::patch_memory};
+use crate::{fn_hook::get_base_address, patcher::patch_memory};
 
 //
 pub fn redirect_saves(path_suffix: &str) {

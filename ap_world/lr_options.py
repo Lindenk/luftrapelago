@@ -43,8 +43,8 @@ class RequiredUniquePlanes(Range):
     Unique CLASSIFIED1 Kills, and Unique CLASSIFIED2 Kills goals. For other goals, it
     signifies the number of checks behind unique build blimp kills.
 
-    Does nothing if Use Unique Completion Checks is enabled (meaning all plane kills
-    will be required)
+    If Use Unique Completion Checks is enabled, this many random builds will
+    be required instead
     """
 
     display_name = "Required Unique Planes"

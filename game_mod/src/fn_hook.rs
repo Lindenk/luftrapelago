@@ -30,7 +30,7 @@ macro_rules! define_detour_hooks {
         // Provide repetative helper fns
         impl [<$name Hook>] {
           pub fn get_fn_address() -> usize {
-            crate::fn_hooks::get_base_address() + $offset
+            crate::fn_hook::get_base_address() + $offset
           }
           pub fn get_fn() -> [<$name Fn>] {
             let target_fn_addr = Self::get_fn_address();

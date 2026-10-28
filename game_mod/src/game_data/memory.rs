@@ -9,14 +9,13 @@ use num_enum::TryFromPrimitive;
 use crate::{
   archipelago::items::{APItem, BASE_ID},
   game_data::plane::{BodyType, EngineType, Part, WeaponType},
-  state::{GAME_STATE, GameState},
 };
 
 const GLOBAL_STATS_PTR: usize = 0x01ab3510;
 const GLOBAL_PLAYER_PTR: usize = 0x01ab34c8;
 
 #[derive(Copy, Clone)]
-pub struct GlobalStats {
+pub struct GameMemory {
   stats_ptr: usize,
   player_ptr: usize,
 }
@@ -118,7 +117,7 @@ pub fn parse_mission_code(code: u32) -> Option<(Part, u8)> {
   part.map(|p| (p, mission_num as u8))
 }
 
-impl GlobalStats {
+impl GameMemory {
   pub fn init() -> Self {
     println!(
       "Pointer to global stats and player ram is currently: {:x}, {:x}",
@@ -190,26 +189,21 @@ impl GlobalStats {
     self.write_global_stats(GlobalStatsOffsets::EnableHangar, 1u8);
   }
 
-  pub fn set_unlocked_parts(
-    &self,
-    weapons: &[WeaponType],
-    bodies: &[BodyType],
-    engines: &[EngineType],
-  ) {
+  pub fn set_unlocked_parts<P: Iterator<Item = Part>>(&self, parts: P) {
     // calc the full set of unlocked parts
-    let mut parts = 0i32;
+    let mut parts_bin = 0i32;
 
-    for w in weapons {
-      parts |= 1 << (*w as u8);
-    }
-    for b in bodies {
-      parts |= (1 << (*b as u8)) << 8;
-    }
-    for e in engines {
-      parts |= (1 << (*e as u8)) << 16;
+    for p in parts {
+      use Part::*;
+      match p {
+        Weapon(w) => parts_bin |= 1 << (w as u8),
+        Body(b) => parts_bin |= (1 << (b as u8)) << 8,
+        Engine(e) => parts_bin |= (1 << (e as u8)) << 16,
+        _ => (),
+      }
     }
 
-    self.write_player_stats(PlayerOffsets::UnlockedParts, parts);
+    self.write_player_stats(PlayerOffsets::UnlockedParts, parts_bin);
   }
 
   pub fn is_weapon_unlocked(&self, weapon: WeaponType) -> bool {
@@ -269,13 +263,6 @@ impl GlobalStats {
     self.modify_player_stats(PlayerOffsets::UnlockedParts, |v: u32| v | mask);
   }*/
 
-  pub fn clear_game_unlock_buffer(&self) {
-    self.write_player_stats(PlayerOffsets::QueuedNotifications, 0u32);
-    self.write_player_stats(PlayerOffsets::UnlockBuffer1, 0u32);
-    self.write_player_stats(PlayerOffsets::UnlockBuffer2, 0u32);
-    self.write_player_stats(PlayerOffsets::UnlockBuffer3, 0u32);
-  }
-
   //pub fn is_mission_completed(&self, mission_num: u8, part_num: u8, part_type: u8) -> bool {
   //  let mut offset = GlobalStatsOffsets::MissionStart as usize;
   //  offset += 0x14; // mission completion flag
@@ -334,26 +321,11 @@ impl GlobalStats {
     missions
   }
 
-  pub fn get_all_active_missions(&self) -> HashMap<Part, MissionDescriptor> {
+  pub fn get_all_active_missions(
+    &self,
+    unlocked_parts: &[Part],
+  ) -> HashMap<Part, MissionDescriptor> {
     let mut missions: HashMap<Part, MissionDescriptor> = HashMap::new();
-
-    // get this from the ap client so we don't run into issues where
-    // the game temporarily sets unlocks for a split second
-    let unlocked_parts: HashSet<Part> = {
-      let mut state = GAME_STATE.lock().unwrap();
-      if let GameState::Connected(state) = &mut *state {
-        state
-          .client
-          .client()
-          .received_items()
-          .iter()
-          .filter_map(|i| APItem::try_from(i.item().id()).ok())
-          .filter_map(|i| Part::try_from(i).ok())
-          .collect()
-      } else {
-        HashSet::default()
-      }
-    };
 
     for m in self
       .get_all_missions()

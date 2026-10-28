@@ -1,8 +1,4 @@
-use crate::{
-  fn_hooks::get_base_address,
-  patcher::CodePatch,
-  state::{GAME_STATE, GameState},
-};
+use crate::{fn_hook::get_base_address, patcher::CodePatch, state::GameState};
 
 pub fn disable_game_unlocks() {
   // skip over the check that displays unlocks on the results screen
@@ -22,8 +18,8 @@ pub fn disable_game_unlocks() {
 }
 
 extern "C" fn rewrite_unlocks() {
-  let mut state = GAME_STATE.lock().unwrap();
-  if let GameState::Connected(state) = &mut *state {
-    state.update_unlocks();
-  }
+  GameState::with(|client, memory| {
+    let unlocked_parts = client.get_parts();
+    memory.set_unlocked_parts(unlocked_parts);
+  });
 }

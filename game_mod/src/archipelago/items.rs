@@ -1,4 +1,4 @@
-use crate::game_data::plane::{BodyType, EngineType, WeaponType};
+use crate::game_data::plane::{BodyType, EngineType, Part, WeaponType};
 
 pub const BASE_ID: i64 = 0x1f700000;
 
@@ -61,6 +61,15 @@ impl APItem {
   pub fn as_engine(&self) -> Option<EngineType> {
     match self {
       Self::Engine(e) => Some(*e),
+      _ => None,
+    }
+  }
+
+  pub fn as_part(&self) -> Option<Part> {
+    match self {
+      Self::Weapon(w) => Some(Part::Weapon(*w)),
+      Self::Body(b) => Some(Part::Body(*b)),
+      Self::Engine(e) => Some(Part::Engine(*e)),
       _ => None,
     }
   }

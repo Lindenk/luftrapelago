@@ -8,7 +8,7 @@ name = "version" # Matches the proxied DLL name (version.dll)
 crate-type = ["cdylib"]
 
 [dependencies]
-archipelago_rs = "3.0.1"
+archipelago_rs = { branch = "feature/tracked-scouted-locations", git = "ssh://git@github.com/Lindenk/archipelago_rs.git" }
 detour = "0.10.0"
 num_enum = "0.7.6"
 paste = "1.0.15"

@@ -1,5 +1,5 @@
 mod archipelago;
-mod fn_hooks;
+mod fn_hook;
 mod game_data;
 mod mods;
 mod patcher;
@@ -12,11 +12,7 @@ use windows::Win32::Foundation::HMODULE;
 use windows::Win32::System::SystemServices::DLL_PROCESS_ATTACH;
 
 use crate::archipelago::client::APClient;
-use crate::mods::{
-  disable_game_unlocks, disable_steam_achievements, disable_tutorial, draw_mission_hints,
-  fix_hangar_screen, init_game_stats, redirect_saves,
-};
-use crate::state::{GAME_STATE, GameInitializing};
+use crate::mods::*;
 
 define_detour_hooks! {
   static Entry: extern "C" fn() -> () => 0x1dc925;
@@ -37,27 +33,25 @@ pub extern "system" fn DllMain(
 pub fn hook_entry() {
   let _ = EntryHook.init_with_self(|| {
     {
+      // connect to the ap server (make sure this works before we start up, even
+      // if we disconnect after)
       let mut ap_client = APClient::with_console_prompt();
+      let seed = &ap_client.client().seed_name().to_string();
 
-      // redirect the save file so we have a unique one per ap run
-      let _ = unsafe { windows::Win32::System::Console::AllocConsole() };
-      let seed = ap_client.client().seed_name();
+      // the client should be connected here. set up our mods and hooks
       redirect_saves(seed);
+      init_mod(ap_client);
+      hook_update_tick();
 
-      // disable steam achievements so we don't accidentally let the player
-      // ruin their steam account
-      disable_steam_achievements();
-
-      // setup remaining hooks
-      init_game_stats();
-      disable_tutorial();
       disable_game_unlocks();
+      disable_steam_achievements();
+      disable_tutorial();
+
       fix_hangar_screen();
       draw_mission_hints();
 
-      // update our state
-      let mut state = GAME_STATE.lock().unwrap();
-      *state = state::GameState::Intializing(GameInitializing { client: ap_client });
+      // enable debug console
+      let _ = unsafe { windows::Win32::System::Console::AllocConsole() };
     }
 
     EntryHook.call()
