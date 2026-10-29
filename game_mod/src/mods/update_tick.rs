@@ -24,7 +24,7 @@ pub fn hook_update_tick() {
         *last = Some(now);
         drop(last); //probably won't matter but release the mutex
 
-        println!("Tick");
+        //println!("Tick");
         update();
       }
     }

@@ -132,28 +132,16 @@ class UseUniqueCompletionChecks(Toggle):
     """
     display_name = "Use Unique Completion Checks"
 
-class StartingPower(Range):
+class StartingHealth(Range):
     """
-    How much to scale your starting Health and Damage (in percent). Lower values make
+    How much to scale your starting Health (in percent). Lower values make
     you weaker to start, higher values make you stronger.
     """
 
-    display_name = "Starting Power"
-    range_start = 50
+    display_name = "Starting Health"
+    range_start = 10
     range_end = 200
-    default = 80
-
-
-class PowerupDamage(Range):
-    """
-    The number of bonus damage up items to mix into the pool. Makes the game easier
-    as these are found.
-    """
-
-    display_name = "Powerup Damage"
-    range_start = 0
-    range_end = 10
-    default = 4
+    default = 50
 
 
 class PowerupHealth(Range):
@@ -167,30 +155,6 @@ class PowerupHealth(Range):
     range_end = 10
     default = 4
 
-
-class PowerupFireRate(Range):
-    """
-    The number of bonus fire rate up items to mix into the pool. Makes the game easier
-    as these are found.
-    """
-
-    display_name = "Powerup Fire rate"
-    range_start = 0
-    range_end = 5
-    default = 2
-
-
-class PowerupDamageBonus(Range):
-    """
-    What percentage bonus each Powerup Damage gives.
-    """
-
-    display_name = "Powerup Damage Bonus"
-    range_start = 5
-    range_end = 100
-    default = 25
-
-
 class PowerupHealthBonus(Range):
     """
     What percentage bonus each Powerup Health gives.
@@ -202,15 +166,27 @@ class PowerupHealthBonus(Range):
     default = 25
 
 
-class PowerupFireRateBonus(Range):
+class PowerupFireRate(Range):
     """
-    What percentage bonus each Powerup Fire Rate gives.
+    The number of bonus fire rate up items to mix into the pool. Makes the game easier
+    as these are found.
     """
 
-    display_name = "Powerup Fire Rate Bonus"
-    range_start = 5
-    range_end = 100
-    default = 50
+    display_name = "Powerup Fire Rate"
+    range_start = 0
+    range_end = 10
+    default = 3
+
+class PowerupBullets(Range):
+    """
+    The number of bonus bullet ups to mix into the pool. Makes the game easier
+    as these are found
+    """
+
+    display_name = "Powerup Bullets"
+    range_start = 0
+    range_end = 10
+    default = 3
 
 
 class FillerWeights(OptionCounter):
@@ -225,16 +201,14 @@ class FillerWeights(OptionCounter):
         "Patch Up",
         "Blank",
         "Gun Jam Trap",
-        "Spawn Trap",
-        "Missile Trap",
+        "Engine Stall Trap",
     }
 
     default = {
         "Patch Up": 5,
         "Blank": 2,
         "Gun Jam Trap": 2,
-        "Spawn Trap": 2,
-        "Missile Trap": 2,
+        "Engine Stall Trap": 2,
     }
 
 
@@ -272,13 +246,11 @@ class LuftrausersOptions(PerGameCommonOptions):
     rank_key_mission_lock: RankKeyMissionLock
     extra_rank_keys: ExtraRankKeys
     use_unique_completion_checks: UseUniqueCompletionChecks
-    starting_power: StartingPower
-    powerup_damage: PowerupDamage
+    starting_health: StartingHealth
     powerup_health: PowerupHealth
-    powerup_fire_rate: PowerupFireRate
-    powerup_damage_bonus: PowerupDamageBonus
     powerup_health_bonus: PowerupHealthBonus
-    powerup_fire_rate_bonus: PowerupFireRateBonus
+    powerup_fire_rate: PowerupFireRate
+    powerup_bullets: PowerupBullets
     filler_weights: FillerWeights
     deathlink: DeathLink
     deathlink_counter: DeathLinkCounter
@@ -301,13 +273,11 @@ luftrausers_option_groups: list[OptionGroup] = [
     OptionGroup(
         "Powerups",
         [
-          StartingPower,
-          PowerupDamage,
+          StartingHealth,
           PowerupHealth,
-          PowerupFireRate,
-          PowerupDamageBonus,
           PowerupHealthBonus,
-          PowerupFireRateBonus,
+          PowerupFireRate,
+          PowerupBullets,
         ]
     )
 ]

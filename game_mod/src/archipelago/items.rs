@@ -11,9 +11,9 @@ pub enum APItem {
   // Parts: Engines (0x0040 - 0x0045)
   Engine(EngineType),
   // Powerups (0x0080 - 0x0082)
-  PowerupDamage,
   PowerupHealth,
   PowerupFireRate,
+  PowerupBonusBullets,
   // Misc (0x00C0 - 0x00C1)
   ProgressiveRank,
   CompletionToken,
@@ -22,8 +22,7 @@ pub enum APItem {
   Blank,
   // Traps (0x0140)
   TrapJam,
-  TrapSpawn,
-  TrapMissiles,
+  TrapStall,
 }
 
 impl APItem {
@@ -32,16 +31,15 @@ impl APItem {
       Self::Weapon(w) => *w as i64,
       Self::Body(b) => 0x0020 + (*b as i64),
       Self::Engine(e) => 0x0040 + (*e as i64),
-      Self::PowerupDamage => 0x0080,
-      Self::PowerupHealth => 0x0081,
-      Self::PowerupFireRate => 0x0082,
+      Self::PowerupHealth => 0x0080,
+      Self::PowerupFireRate => 0x0081,
+      Self::PowerupBonusBullets => 0x0082,
       Self::ProgressiveRank => 0x00C0,
       Self::CompletionToken => 0x00C1,
       Self::Patchup => 0x0100,
       Self::Blank => 0x0101,
       Self::TrapJam => 0x0140,
-      Self::TrapSpawn => 0x0141,
-      Self::TrapMissiles => 0x0142,
+      Self::TrapStall => 0x0141,
     };
     id + BASE_ID
   }
@@ -93,16 +91,15 @@ impl TryFrom<i64> for APItem {
         let et = EngineType::try_from((id - 0x0040) as u8).map_err(|_| "Invalid Engine code")?;
         Ok(Self::Engine(et))
       }
-      0x0080 => Ok(Self::PowerupDamage),
-      0x0081 => Ok(Self::PowerupHealth),
-      0x0082 => Ok(Self::PowerupFireRate),
+      0x0080 => Ok(Self::PowerupHealth),
+      0x0081 => Ok(Self::PowerupFireRate),
+      0x0082 => Ok(Self::PowerupBonusBullets),
       0x00C0 => Ok(Self::ProgressiveRank),
       0x00C1 => Ok(Self::CompletionToken),
       0x0100 => Ok(Self::Patchup),
       0x0101 => Ok(Self::Blank),
       0x0140 => Ok(Self::TrapJam),
-      0x0141 => Ok(Self::TrapSpawn),
-      0x0142 => Ok(Self::TrapMissiles),
+      0x0141 => Ok(Self::TrapStall),
       _ => Err("Unknown item code"),
     }
   }

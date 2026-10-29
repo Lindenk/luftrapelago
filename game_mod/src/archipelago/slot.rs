@@ -15,17 +15,15 @@ pub enum Goal {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct PowerupBonuses {
-  damage: u16,
-  health: u16,
-  fire_rate: u16,
+  pub health: u16,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct SlotData {
-  goal: Goal,
-  starting_power: u16,
-  powerup_bonuses: PowerupBonuses,
-  rank_key_mission_lock: Option<u8>,
-  dealthlink_counter: Option<u8>,
+  pub goal: Goal,
+  pub starting_health: u16,
+  pub powerup_bonuses: PowerupBonuses,
+  pub rank_key_mission_lock: Option<u8>,
+  pub dealthlink_counter: Option<u8>,
 }

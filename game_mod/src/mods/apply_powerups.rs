@@ -1,0 +1,88 @@
+use std::{ffi::c_void, ops::Div};
+
+use crate::{archipelago::items::APItem, define_detour_hooks, state::GameState};
+
+define_detour_hooks! {
+  static LoadWeaponStats: extern "cdecl" fn(*mut c_void, *mut c_void) -> *mut c_void => 0xd7f60;
+  static LoadBodyStats: extern "cdecl" fn(*mut c_void) -> *mut c_void => 0xd7000;
+}
+
+pub fn apply_powerups() {
+  let _ = LoadWeaponStatsHook.init_with_self(|stats, param2| {
+    let res = LoadWeaponStatsHook.call(stats, param2);
+
+    GameState::with(|client, _| {
+      let firerate_items = client
+        .get_items()
+        .filter(|i| matches!(i, APItem::PowerupFireRate))
+        .count() as i32;
+      let bullet_items = client
+        .get_items()
+        .filter(|i| matches!(i, APItem::PowerupBonusBullets))
+        .count() as i32;
+
+      // weapon interval is stored at stats+0x1d*4, as an int
+      let stats = stats as *mut i32;
+      unsafe {
+        let interval_ptr = stats.add(0x1d);
+        let mut interval = interval_ptr.read_volatile();
+        interval = (interval - firerate_items).max(1);
+        interval_ptr.write_volatile(interval);
+      }
+      unsafe {
+        // add bonus bullets
+        let numbullet_ptr = stats.add(0x21);
+        let mut numbullets = numbullet_ptr.read_volatile();
+        numbullets += bullet_items;
+        numbullet_ptr.write_volatile(numbullets);
+      }
+      unsafe {
+        // increase max bullets to compensate for powerups
+        // (matters the most for missles)
+        let maxbullets_ptr = stats.add(0x1e);
+        let mut maxbullets = maxbullets_ptr.read_volatile();
+        maxbullets *= bullet_items * firerate_items;
+        maxbullets_ptr.write_volatile(maxbullets);
+      }
+    });
+
+    res
+  });
+  let _ = unsafe { LoadWeaponStatsHook.enable() };
+
+  let _ = LoadBodyStatsHook.init_with_self(|stats| {
+    let res = LoadBodyStatsHook.call(stats);
+
+    GameState::with(|client, _| {
+      let maxhealth_items = client
+        .get_items()
+        .filter(|i| matches!(i, APItem::PowerupHealth))
+        .count() as f32;
+
+      let slot_data = client.client().slot_data();
+      let health_bonus = (slot_data.powerup_bonuses.health as f32).div(100.);
+      let starting_health = (slot_data.starting_health as f32).div(100.);
+
+      let scale = starting_health + (maxhealth_items * health_bonus);
+
+      // max health is stored at stats+0x18*4, as a float
+      let stats = stats as *mut f32;
+      unsafe {
+        let max_hp_ptr = stats.add(0x18);
+        let mut maxhealth = max_hp_ptr.read_volatile();
+        maxhealth *= scale;
+        max_hp_ptr.write_volatile(maxhealth);
+      }
+      // scale regen rate a bit so the max health feels a little better
+      unsafe {
+        let regen_ptr = stats.add(0x17);
+        let mut regen_rate = regen_ptr.read_volatile();
+        regen_rate *= scale.midpoint(1.); // make it half as effective (1 + scale) /2
+        regen_ptr.write_volatile(regen_rate);
+      }
+    });
+
+    res
+  });
+  let _ = unsafe { LoadBodyStatsHook.enable() };
+}

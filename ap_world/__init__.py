@@ -149,9 +149,9 @@ class LuftrausersWorld(World):
         required_items.extend(pool_parts)
 
         # bonuses
-        required_items.extend([powerups["damage"].item_name for _n in range(options.powerup_damage)])
         required_items.extend([powerups["health"].item_name for _n in range(options.powerup_health)])
         required_items.extend([powerups["firerate"].item_name for _n in range(options.powerup_fire_rate)])
+        required_items.extend([powerups["bonusbullets"].item_name for _n in range(options.powerup_bullets)])
 
         # rank keys
         if options.enable_rank_keys:
@@ -179,8 +179,7 @@ class LuftrausersWorld(World):
             "Patch Up": lr_names.Filler.Patchup,
             "Blank": lr_names.Filler.Blank,
             "Gun Jam Trap": lr_names.Filler.TrapJam,
-            "Spawn Trap": lr_names.Filler.TrapSpawn,
-            "Missile Trap": lr_names.Filler.TrapMissiles,
+            "Engine Stall Trap": lr_names.Filler.TrapStall,
         }
         filler_items = [filler_map[item] for item in filler_items]
 
@@ -242,7 +241,7 @@ class LuftrausersWorld(World):
             add_rule(self.get_location(loc), lambda state, i=i: state.has_group_unique("Parts", self.player, count=i))
 
         # difficulty logic. Ensure the player has enough powerups before expecting completions
-        total_powerups = options.powerup_damage + options.powerup_health + options.powerup_fire_rate
+        total_powerups = options.powerup_health + options.powerup_fire_rate + options.powerup_bullets
         for c in lr_names.generic_completions[: options.required_unique_planes]:
             add_rule(
                 self.get_location(c), lambda state: state.has_group("Powerups", self.player, count=total_powerups // 2)
@@ -281,9 +280,9 @@ class LuftrausersWorld(World):
                 loc,
                 lambda state: state.has_all_counts(
                     {
-                        lr_names.Bonuses.PowerupDamage: int(options.powerup_damage),
                         lr_names.Bonuses.PowerupHealth: int(options.powerup_health),
                         lr_names.Bonuses.PowerupFireRate: int(options.powerup_fire_rate),
+                        lr_names.Bonuses.PowerupFireRate: int(options.powerup_bullets),
                     },
                     self.player,
                 ),
@@ -317,11 +316,9 @@ class LuftrausersWorld(World):
 
         data = {
             "goal": goal,
-            "starting_power": options.starting_power.value,
+            "starting_health": options.starting_health.value,
             "powerup_bonuses": {
-                "damage": options.powerup_damage_bonus.value,
                 "health": options.powerup_health_bonus.value,
-                "fire_rate": options.powerup_fire_rate_bonus.value,
             },
         }
 

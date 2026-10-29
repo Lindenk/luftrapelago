@@ -37,9 +37,9 @@ parts: list[LuftrausersItemData] = [
 ]
 
 powerups: dict[str, LuftrausersItemData] = {
-    "damage": LuftrausersItemData(0x0080, Bonuses.PowerupDamage, ItemClassification.progression),
-    "health": LuftrausersItemData(0x0081, Bonuses.PowerupHealth, ItemClassification.progression),
-    "firerate": LuftrausersItemData(0x0082, Bonuses.PowerupFireRate, ItemClassification.progression),
+    "health": LuftrausersItemData(0x0080, Bonuses.PowerupHealth, ItemClassification.progression),
+    "firerate": LuftrausersItemData(0x0081, Bonuses.PowerupFireRate, ItemClassification.progression),
+    "bonusbullets": LuftrausersItemData(0x0082, Bonuses.PowerupBonusBullets, ItemClassification.progression),
 }
 
 misc: dict[str, LuftrausersItemData] = {
@@ -54,8 +54,7 @@ filler: list[LuftrausersItemData] = [
 
 traps: list[LuftrausersItemData] = [
     LuftrausersItemData(0x0140, Filler.TrapJam, ItemClassification.trap),
-    LuftrausersItemData(0x0140, Filler.TrapSpawn, ItemClassification.trap),
-    LuftrausersItemData(0x0140, Filler.TrapMissiles, ItemClassification.trap),
+    LuftrausersItemData(0x0141, Filler.TrapStall, ItemClassification.trap),
 ]
 
 item_groups: dict[str, set[str]] = {

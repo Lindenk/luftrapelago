@@ -41,17 +41,18 @@ class EngineNames(NameBase):
 
 
 class Bonuses(NameBase):
-    PowerupDamage = "Schadensbooster"
-    PowerupHealth = "Heilung"
-    PowerupFireRate = "Schnellfeuer"
+    PowerupHealth = "Max Health Up"
+    PowerupFireRate = "Fire Rate Up"
+    PowerupBonusBullets = "Bullets Up"
 
 
 class Filler(NameBase):
     Patchup = "Patch Up"
     Blank = "Screen Clear"
     TrapJam = "Gun Jam"
-    TrapSpawn = "Wave Spawn"
-    TrapMissiles = "Anti-air Missiles"
+    TrapStall = "Engine Stall"
+#   TrapSpawn = "Wave Spawn"
+#    TrapMissiles = "Anti-air Missiles"
 
 
 class MiscItems(NameBase):

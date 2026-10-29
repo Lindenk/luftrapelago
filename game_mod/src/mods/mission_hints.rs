@@ -75,13 +75,13 @@ pub fn check_hints() {
   GameState::with(|client, memory| {
     let unlocked_parts: Vec<_> = client.get_parts().collect();
     let active_missions = memory.get_all_active_missions(&unlocked_parts);
-    println!("Active missions: {:?}", active_missions);
+    //println!("Active missions: {:?}", active_missions);
     let scouted_locations: Vec<_> = client
       .client()
       .scouted_locations()
       .map(|l| l.location().as_location_id())
       .collect();
-    println!("Scouted locations: {:?}", scouted_locations);
+    //println!("Scouted locations: {:?}", scouted_locations);
     let unhinted_missions: Vec<_> = active_missions
       .iter()
       .filter_map(|(_, m)| {
@@ -89,7 +89,7 @@ pub fn check_hints() {
         scouted_locations.contains(&id).not().then_some(id)
       })
       .collect();
-    println!("Unhinted missions: {:?}", unhinted_missions);
+    //println!("Unhinted missions: {:?}", unhinted_missions);
     if unhinted_missions.len() > 0 {
       client
         .client()

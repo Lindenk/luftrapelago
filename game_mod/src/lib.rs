@@ -49,6 +49,7 @@ pub fn hook_entry() {
 
       fix_hangar_screen();
       draw_mission_hints();
+      apply_powerups();
 
       // enable debug console
       let _ = unsafe { windows::Win32::System::Console::AllocConsole() };
