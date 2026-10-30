@@ -67,11 +67,11 @@ enum PlayerOffsets {
   UnlockBuffer3 = 0x2778,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct MissionDescriptor {
-  num: u8,
-  part: Part,
-  is_completed: bool,
+  pub num: u8,
+  pub part: Part,
+  pub is_completed: bool,
 }
 
 impl MissionDescriptor {

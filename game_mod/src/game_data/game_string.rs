@@ -84,4 +84,9 @@ impl GameString {
     let s = self.to_string();
     GameStringAssignHook::get_fn()(other, s.as_ptr(), s.len() as u32);
   }
+
+  // assign to a game string using a ptr
+  pub fn assign_from_str(game_str: *mut u8, s: &str) {
+    GameStringAssignHook::get_fn()(game_str, s.as_ptr(), s.len() as u32);
+  }
 }
