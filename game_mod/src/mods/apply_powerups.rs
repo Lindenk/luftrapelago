@@ -1,10 +1,13 @@
 use std::{ffi::c_void, ops::Div};
 
-use crate::{archipelago::items::APItem, define_detour_hooks, state::GameState};
+use crate::{
+  archipelago::items::APItem, define_detour_hooks, fn_hook::get_base_address,
+  patcher::patch_memory, state::GameState,
+};
 
 define_detour_hooks! {
   static LoadWeaponStats: extern "cdecl" fn(*mut c_void, *mut c_void) -> *mut c_void => 0xd7f60;
-  static LoadBodyStats: extern "cdecl" fn(*mut c_void) -> *mut c_void => 0xd7000;
+  //static LoadBodyStats: extern "cdecl" fn(*mut c_void) -> *mut c_void => 0xd7000;
 }
 
 pub fn apply_powerups() {
@@ -50,39 +53,56 @@ pub fn apply_powerups() {
   });
   let _ = unsafe { LoadWeaponStatsHook.enable() };
 
-  let _ = LoadBodyStatsHook.init_with_self(|stats| {
-    let res = LoadBodyStatsHook.call(stats);
+  // Detour hooks this function wrong so just hook the end manually. There's
+  // 14 extra alignment bytes after the ret so we should have room
+  unsafe {
+    // addr of the ret
+    let addr = (get_base_address() + 0xd7e51) as *mut u8;
+    let mut patch = vec![
+      0x9C, 0x60, // push fd, ad
+      0x89, 0xC1, // mov ecx, eax (the returned pointer) for our arg
+      0xb8, // mov eax, set up the fn call
+    ];
+    let func_addr = modify_body_stats as extern "fastcall" fn(*mut f32) as u32;
+    patch.extend_from_slice(&func_addr.to_le_bytes());
+    patch.extend_from_slice(&[
+      0xFF, 0xD0, // call eax
+      0x61, 0x9D, // pop ad, fd
+      0xC3, // ret
+    ]);
 
-    GameState::with(|client, _| {
-      let maxhealth_items = client
-        .get_items()
-        .filter(|i| matches!(i, APItem::PowerupHealth))
-        .count() as f32;
+    // sanity check and patch
+    assert!(patch.len() <= 15);
+    patch_memory(addr, patch.as_slice());
+  }
+}
 
-      let slot_data = client.client().slot_data();
-      let health_bonus = (slot_data.powerup_bonuses.health as f32).div(100.);
-      let starting_health = (slot_data.starting_health as f32).div(100.);
+extern "fastcall" fn modify_body_stats(stats: *mut f32) {
+  GameState::with(|client, _| {
+    let maxhealth_items = client
+      .get_items()
+      .filter(|i| matches!(i, APItem::PowerupHealth))
+      .count() as f32;
 
-      let scale = starting_health + (maxhealth_items * health_bonus);
+    let slot_data = client.client().slot_data();
+    let health_bonus = (slot_data.powerup_bonuses.health as f32).div(100.);
+    let starting_health = (slot_data.starting_health as f32).div(100.);
 
-      // max health is stored at stats+0x18*4, as a float
-      let stats = stats as *mut f32;
-      unsafe {
-        let max_hp_ptr = stats.add(0x18);
-        let mut maxhealth = max_hp_ptr.read_volatile();
-        maxhealth *= scale;
-        max_hp_ptr.write_volatile(maxhealth);
-      }
-      // scale regen rate a bit so the max health feels a little better
-      unsafe {
-        let regen_ptr = stats.add(0x17);
-        let mut regen_rate = regen_ptr.read_volatile();
-        regen_rate *= scale.midpoint(1.); // make it half as effective (1 + scale) /2
-        regen_ptr.write_volatile(regen_rate);
-      }
-    });
+    let scale = starting_health + (maxhealth_items * health_bonus);
 
-    res
+    // max health is stored at stats+0x18*4, as a float
+    unsafe {
+      let max_hp_ptr = stats.add(0x18);
+      let mut maxhealth = max_hp_ptr.read_volatile();
+      maxhealth *= scale;
+      max_hp_ptr.write_volatile(maxhealth);
+    }
+    // scale regen rate a bit so the max health feels a little better
+    unsafe {
+      let regen_ptr = stats.add(0x17);
+      let mut regen_rate = regen_ptr.read_volatile();
+      regen_rate *= scale.midpoint(1.); // make it half as effective (1 + scale) /2
+      regen_ptr.write_volatile(regen_rate);
+    }
   });
-  let _ = unsafe { LoadBodyStatsHook.enable() };
 }

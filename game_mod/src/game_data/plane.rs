@@ -40,6 +40,7 @@ impl TryFrom<APItem> for Part {
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, PartialOrd, Ord, TryFromPrimitive)]
 #[repr(u8)]
 pub enum WeaponType {
+  Random = 255,
   Original = 0,
   Laser = 1,
   Spread = 2,
@@ -61,6 +62,7 @@ impl TryFrom<Part> for WeaponType {
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, PartialOrd, Ord, TryFromPrimitive)]
 #[repr(u8)]
 pub enum BodyType {
+  Random = 255,
   Original = 0,
   Armor = 1,
   Melee = 2,
@@ -81,6 +83,7 @@ impl TryFrom<Part> for BodyType {
 #[derive(Debug, Hash, Eq, Clone, Copy, PartialEq, PartialOrd, Ord, TryFromPrimitive)]
 #[repr(u8)]
 pub enum EngineType {
+  Random = 255,
   Original = 0,
   Superboost = 1,
   Gungine = 2,

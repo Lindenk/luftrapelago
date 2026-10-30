@@ -1,9 +1,14 @@
 use crate::{
+  define_detour_hooks,
   fn_hook::get_base_address,
   game_data::plane::{BodyType, EngineType, Part, WeaponType},
-  patcher::patch_memory,
+  patcher::{CodePatch, Reg, patch_memory},
   state::GameState,
 };
+
+define_detour_hooks! {
+  static RandomUnlockCheck: extern "thiscall" fn(u8, u8) -> u32 => 0x6ee00;
+}
 
 // By default the game expects unlocked parts to be sequantial, and will
 // incorrectly cycle through them if there are any gaps. Also it assumes
@@ -11,6 +16,18 @@ use crate::{
 // parts when entering the screen, and fix the cycling logic so it selects
 // the next unlocked part
 pub fn fix_hangar_screen() {
+  // always allow random as a selection
+  //let _ = RandomUnlockCheckHook.init_with_self(|_, _| 0);
+  //let _ = unsafe { RandomUnlockCheckHook.enable() };
+
+  // disable the hangar icon unlock
+  unsafe {
+    let ptr = (get_base_address() + 0x7205f) as *mut u8;
+    // loads the flag to check for if RANDOM is unlocked (6, 7, and 8 are unused
+    // so they should also be false)
+    patch_memory(ptr, &[0xba, 0x07, 0x00, 0x00, 0x00]);
+  }
+
   // nop the if statement jumps so we're always allowed to cycle
   unsafe {
     // scroll right unlock check
@@ -34,6 +51,21 @@ pub fn fix_hangar_screen() {
     // some, but not all, of the urauser parts. Replace the check with the
     // same logic but with an additional check for if the selected parts are
     // also unlocked
+    /*{
+      let patch_start = (get_base_address() + 0x73e54) as *mut u8;
+      let patch_true_branch = get_base_address() + 0x73e95;
+      let patch_false_branch = (get_base_address() + 0x73f0f) as *mut u8;
+      CodePatch::at(patch_start)
+        .arg_reg(Reg::Eax)
+        .payload(check_valid_build as extern "C" fn(*const u8) -> u32)
+        .branch_if_nonzero(patch_true_branch)
+        .continuation(patch_false_branch)
+        .postamble(vec![
+          0x8a, 0x93, 0xb9, 0x01, 0x00, 0x00, // load DL
+          0x8a, 0x83, 0xba, 0x01, 0x00, 0x00, // load AL
+        ])
+        .write();
+    }*/
     {
       let patch_start = get_base_address() + 0x73e54;
       let patch_true_branch = get_base_address() + 0x73e95;
@@ -45,7 +77,7 @@ pub fn fix_hangar_screen() {
         0x53, // pass in the host function's param_1
         0xb8, // MOV EAX, imm32 (setup the function call)
       ];
-      // patch in our check (rust complains if I make this readable)
+      // patch in our check
       let func_addr = check_valid_build as extern "C" fn(*const u8) -> bool as usize as u32;
       patch_bytes.extend_from_slice(&func_addr.to_le_bytes());
 
@@ -94,8 +126,6 @@ extern "C" fn check_valid_build(hangar_data: *const u8) -> bool {
   let unlocked_parts: Vec<_> = GameState::with(|client, _| client.get_parts().collect())
     .expect("Somehow we checked the hangar build without an ap client!");
 
-  //println!("Pointer received from fn: {:x}", hangar_data as usize);
-
   let parts = {
     let w = WeaponType::try_from(unsafe {
       hangar_data
@@ -123,8 +153,6 @@ extern "C" fn check_valid_build(hangar_data: *const u8) -> bool {
 
   match parts {
     (Some(w), Some(b), Some(e)) => {
-      //println!("Parts selected: {:?}, {:?}, {:?}", w, b, e);
-
       // make sure all parts selected are unlocked
       let is_unlocked = [Part::from(w), Part::from(b), Part::from(e)]
         .iter()
