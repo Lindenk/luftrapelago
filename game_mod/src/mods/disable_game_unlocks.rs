@@ -18,7 +18,7 @@ pub fn disable_game_unlocks() {
 }
 
 extern "C" fn rewrite_unlocks() {
-  GameState::with(|client, memory| {
+  GameState::with(|client, memory, _| {
     let unlocked_parts = client.get_parts();
     memory.set_unlocked_parts(unlocked_parts);
   });

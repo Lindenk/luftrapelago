@@ -38,6 +38,9 @@ pub fn hook_entry() {
       let mut ap_client = APClient::with_console_prompt();
       let seed = &ap_client.client().seed_name().to_string();
 
+      // enable debug console
+      let _ = unsafe { windows::Win32::System::Console::AllocConsole() };
+
       // the client should be connected here. set up our mods and hooks
       redirect_saves(seed);
       init_mod(ap_client);
@@ -49,10 +52,7 @@ pub fn hook_entry() {
 
       fix_hangar_screen();
       draw_mission_hints();
-      apply_powerups();
-
-      // enable debug console
-      let _ = unsafe { windows::Win32::System::Console::AllocConsole() };
+      apply_powerups_and_traps();
     }
 
     EntryHook.call()

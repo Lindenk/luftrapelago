@@ -2,7 +2,7 @@ use crate::{
   define_detour_hooks,
   fn_hook::get_base_address,
   game_data::plane::{BodyType, EngineType, Part, WeaponType},
-  patcher::{CodePatch, Reg, patch_memory},
+  patcher::patch_memory,
   state::GameState,
 };
 
@@ -123,7 +123,7 @@ pub fn fix_hangar_screen() {
 }
 
 extern "C" fn check_valid_build(hangar_data: *const u8) -> bool {
-  let unlocked_parts: Vec<_> = GameState::with(|client, _| client.get_parts().collect())
+  let unlocked_parts: Vec<_> = GameState::with(|client, _, _| client.get_parts().collect())
     .expect("Somehow we checked the hangar build without an ap client!");
 
   let parts = {

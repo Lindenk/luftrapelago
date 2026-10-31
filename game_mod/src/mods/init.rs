@@ -28,7 +28,7 @@ pub fn init_mod(ap_client: APClient) {
     // mod from initing 2+ times)
     if let Some(client) = (*client.clone().lock().unwrap()).take() {
       GameState::init(client, GameMemory::init());
-      GameState::with(|client, memory| {
+      GameState::with(|client, memory, _| {
         memory.enable_hangar();
 
         // update our unlocked parts

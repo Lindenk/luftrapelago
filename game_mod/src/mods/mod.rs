@@ -1,4 +1,4 @@
-mod apply_powerups;
+mod apply_powerups_and_traps;
 mod disable_game_unlocks;
 mod disable_steam_achievements;
 mod disable_tutorial;
@@ -9,7 +9,7 @@ mod redirect_saves;
 mod sdl_fixes;
 mod update_tick;
 
-pub use apply_powerups::*;
+pub use apply_powerups_and_traps::*;
 pub use disable_game_unlocks::*;
 pub use disable_steam_achievements::*;
 pub use disable_tutorial::*;

@@ -873,6 +873,7 @@ dependencies = [
  "detour",
  "num_enum",
  "paste",
+ "rand 0.10.3",
  "serde",
  "ustr",
  "windows",

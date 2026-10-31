@@ -1,4 +1,8 @@
-use std::{ffi::c_void, ops::Div};
+use std::{ffi::c_void, ops::Div, ptr::addr_of_mut};
+
+use windows::Win32::System::Memory::{
+  PAGE_EXECUTE_READWRITE, PAGE_PROTECTION_FLAGS, VirtualProtect,
+};
 
 use crate::{
   archipelago::items::APItem, define_detour_hooks, fn_hook::get_base_address,
@@ -8,13 +12,14 @@ use crate::{
 define_detour_hooks! {
   static LoadWeaponStats: extern "cdecl" fn(*mut c_void, *mut c_void) -> *mut c_void => 0xd7f60;
   //static LoadBodyStats: extern "cdecl" fn(*mut c_void) -> *mut c_void => 0xd7000;
+  //static LoadEngineStats: extern "cdecl" fn(*mut c_void) -> *mut c_void => 0xd5740;
 }
 
-pub fn apply_powerups() {
+pub fn apply_powerups_and_traps() {
   let _ = LoadWeaponStatsHook.init_with_self(|stats, param2| {
     let res = LoadWeaponStatsHook.call(stats, param2);
 
-    GameState::with(|client, _| {
+    GameState::with(|client, _, temp_state| {
       let firerate_items = client
         .get_items()
         .filter(|i| matches!(i, APItem::PowerupFireRate))
@@ -33,11 +38,15 @@ pub fn apply_powerups() {
         interval_ptr.write_volatile(interval);
       }
       unsafe {
-        // add bonus bullets
+        // add bonus bullets (and handle gun jams)
         let numbullet_ptr = stats.add(0x21);
-        let mut numbullets = numbullet_ptr.read_volatile();
-        numbullets += bullet_items;
-        numbullet_ptr.write_volatile(numbullets);
+        if temp_state.gunjamed_timeout.is_some() {
+          numbullet_ptr.write_volatile(0);
+        } else {
+          let mut numbullets = numbullet_ptr.read_volatile();
+          numbullets += bullet_items;
+          numbullet_ptr.write_volatile(numbullets);
+        }
       }
       unsafe {
         // increase max bullets to compensate for powerups
@@ -75,10 +84,63 @@ pub fn apply_powerups() {
     assert!(patch.len() <= 15);
     patch_memory(addr, patch.as_slice());
   }
+
+  // the engine stats also has this problem...damn. Only 8 bytes of alignment at
+  // the end... Let's be a little creative with this I suppose
+  // allocate some const bytes and mark them as executable
+  static mut TRAMPOLINE: [u8; 14] = [
+    0x9C, 0x60, // push fd, ad
+    0x89, 0xC1, // mov ecx, eax (the returned pointer) for our arg
+    0xb8, // mov eax, set up the fn call
+    0x00, 0x00, 0x00, 0x00, // fn pointer that will be written
+    0xFF, 0xD0, // call eax
+    0x61, 0x9D, // pop ad, fd
+    0xC3, // ret
+  ];
+
+  unsafe {
+    let mut old = PAGE_PROTECTION_FLAGS(0);
+    let ptr = addr_of_mut!(TRAMPOLINE) as *mut c_void;
+    let _ = VirtualProtect(
+      ptr,
+      std::mem::size_of::<[u8; 14]>(),
+      PAGE_EXECUTE_READWRITE,
+      &mut old,
+    );
+
+    // write our fn into the trampoline
+    let fn_addr = modify_engine_stats as *const fn(*mut f32) as u32;
+    (ptr as *mut u32).byte_add(5).write_unaligned(fn_addr);
+
+    // write a jump to the trampoline over the ret (+ alignment bytes)
+    let hooked_addr = (get_base_address() + 0xd6d67) as *mut u8;
+    let trampoline_rel_addr = (ptr as i32) - (hooked_addr as i32 + 5);
+    let mut patch = vec![0xe9];
+    patch.extend_from_slice(&(trampoline_rel_addr as u32).to_le_bytes());
+    patch_memory(hooked_addr as *mut u8, patch.as_slice());
+  }
+}
+
+extern "fastcall" fn modify_engine_stats(stats: *mut f32) {
+  GameState::with(|_, _, temp_state| {
+    if temp_state.engine_stall_timeout.is_some() {
+      unsafe {
+        // set accelaration to 0
+        let max_speed_ptr = stats.add(0x32);
+        max_speed_ptr.write_volatile(0f32);
+        // space accel
+        //let max_speed_ptr = stats.add(0x40);
+        //max_speed_ptr.write_volatile(0f32);
+        // water accel
+        //let max_speed_ptr = stats.add(0x3b);
+        //max_speed_ptr.write_volatile(0f32);
+      }
+    }
+  });
 }
 
 extern "fastcall" fn modify_body_stats(stats: *mut f32) {
-  GameState::with(|client, _| {
+  GameState::with(|client, _, _| {
     let maxhealth_items = client
       .get_items()
       .filter(|i| matches!(i, APItem::PowerupHealth))

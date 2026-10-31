@@ -3,7 +3,7 @@ use std::{
   time::{Duration, Instant},
 };
 
-use crate::{define_detour_hooks, mods::check_hints, state::GameState};
+use crate::{archipelago::items::APItem, define_detour_hooks, mods::check_hints, state::GameState};
 
 define_detour_hooks! {
   static UpdateTick: extern "thiscall" fn(*mut std::ffi::c_void) -> () => 0xa1510;
@@ -35,8 +35,41 @@ pub fn hook_update_tick() {
 }
 
 fn update() {
-  GameState::with(|client, _| {
-    client.client().update();
+  GameState::with(|client, _, temp_state| {
+    let events = client.client().update();
+
+    for e in events {
+      match e {
+        archipelago_rs::Event::ReceivedItems(i) => {
+          let new_items: Vec<_> = client
+            .client()
+            .received_items()
+            .iter()
+            .skip(i)
+            .filter_map(|i| APItem::try_from(i.item().id()).ok())
+            .collect();
+          if new_items.contains(&APItem::TrapJam) {
+            temp_state.gunjamed_timeout = Some(Instant::now() + Duration::from_secs(6));
+          }
+          if new_items.contains(&APItem::TrapStall) {
+            temp_state.engine_stall_timeout = Some(Instant::now() + Duration::from_secs(3));
+          }
+        }
+        _ => (),
+      }
+    }
+
+    // check for temp state timeouts
+    if let Some(timer) = temp_state.gunjamed_timeout
+      && Instant::now() >= timer
+    {
+      temp_state.gunjamed_timeout = None;
+    }
+    if let Some(timer) = temp_state.engine_stall_timeout
+      && Instant::now() >= timer
+    {
+      temp_state.engine_stall_timeout = None;
+    }
   });
 
   // TODO: Bind this somewhere more sane

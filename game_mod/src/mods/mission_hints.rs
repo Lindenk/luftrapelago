@@ -92,7 +92,7 @@ pub fn draw_mission_hints() {
       Invalid,
     }
     let hint = if let Some(mission) = mission {
-      GameState::with(|client, _| {
+      GameState::with(|client, _, _| {
         if client.get_parts().find(|p| *p == mission.part).is_none() {
           return Hint::Locked;
         }
@@ -178,7 +178,7 @@ extern "fastcall" fn check_mission_locked_text(this: *const u8, msg: *mut u8) ->
 
 // TODO: Hook this in somewhere sane, like at the end of a round
 pub fn check_hints() {
-  GameState::with(|client, memory| {
+  GameState::with(|client, memory, _| {
     let unlocked_parts: Vec<_> = client.get_parts().collect();
     let active_missions = memory.get_all_active_missions(&unlocked_parts);
     //println!("Active missions: {:?}", active_missions);
