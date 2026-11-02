@@ -148,7 +148,7 @@ extern "fastcall" fn modify_body_stats(stats: *mut f32) {
 
     let slot_data = client.client().slot_data();
     let health_bonus = (slot_data.powerup_bonuses.health as f32).div(100.);
-    let starting_health = (slot_data.starting_health as f32).div(100.) + 500.;
+    let starting_health = (slot_data.starting_health as f32).div(100.);
 
     let scale = starting_health + (maxhealth_items * health_bonus);
 

@@ -6,7 +6,7 @@ use std::{
 use crate::{
   archipelago::items::APItem,
   define_detour_hooks,
-  mods::{check_hints, check_missions},
+  mods::{check_hints, check_missions, check_rauser_level},
   state::GameState,
 };
 
@@ -80,4 +80,5 @@ fn update() {
   // TODO: Bind these somewhere more sane
   check_hints();
   check_missions();
+  check_rauser_level();
 }

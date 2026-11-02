@@ -221,8 +221,11 @@ impl GameMemory {
   //    std::ptr::read_volatile(target) > 0
   //  }
   //}
-  pub fn get_player_level(&self) -> u16 {
+  pub fn get_rauser_level(&self) -> u16 {
     self.read_player_stats(PlayerOffsets::PlayerLevel)
+  }
+  pub fn set_rauser_level(&self, level: u16) {
+    self.write_player_stats(PlayerOffsets::PlayerLevel, level);
   }
   //pub fn get_total_score(&self) -> i32 {
   //  self.read_i32(GlobalStatsOffsets::TotalScore)

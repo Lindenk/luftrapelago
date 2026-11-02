@@ -1,5 +1,6 @@
 mod apply_powerups_and_traps;
 mod check_missions;
+mod check_rauser_level;
 mod disable_game_unlocks;
 mod disable_steam_achievements;
 mod disable_tutorial;
@@ -12,6 +13,7 @@ mod update_tick;
 
 pub use apply_powerups_and_traps::*;
 pub use check_missions::*;
+pub use check_rauser_level::*;
 pub use disable_game_unlocks::*;
 pub use disable_steam_achievements::*;
 pub use disable_tutorial::*;
