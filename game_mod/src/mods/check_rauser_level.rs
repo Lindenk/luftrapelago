@@ -8,7 +8,6 @@ use crate::{
 pub fn check_rauser_level() {
   // check missions to see if we need to trigger a check
   GameState::with(|client, memory, _| {
-    // TODO: put this check in the aplocation
     let local_level = memory.get_rauser_level();
     let remote_levels: HashSet<_> = client
       .client()

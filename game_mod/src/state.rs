@@ -10,6 +10,10 @@ static GAME_STATE: LazyLock<Mutex<GameState>> = LazyLock::new(|| Mutex::default(
 // for state that changes often
 #[derive(Default)]
 pub struct GameTempState {
+  pub patchup_active: bool,
+  pub current_max_hp: f32,
+  pub deathlink_triggered: bool,
+  pub deathlink_counter: u8,
   pub gunjamed_timeout: Option<Instant>,
   pub engine_stall_timeout: Option<Instant>,
 }

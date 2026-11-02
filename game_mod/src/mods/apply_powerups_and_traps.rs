@@ -146,7 +146,7 @@ extern "fastcall" fn modify_engine_stats(stats: *mut f32) {
 }
 
 extern "fastcall" fn modify_body_stats(stats: *mut f32) {
-  GameState::with(|client, _, _| {
+  GameState::with(|client, _, temp_state| {
     let maxhealth_items = client
       .get_items()
       .filter(|i| matches!(i, APItem::PowerupHealth))
@@ -164,6 +164,8 @@ extern "fastcall" fn modify_body_stats(stats: *mut f32) {
       let mut maxhealth = max_hp_ptr.read_volatile();
       maxhealth *= scale;
       max_hp_ptr.write_volatile(maxhealth);
+      // a bit jank but I don't have a better way to query it
+      temp_state.current_max_hp = maxhealth;
     }
     // scale regen rate a bit so the max health feels a little better
     unsafe {

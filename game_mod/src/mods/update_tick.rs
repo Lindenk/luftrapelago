@@ -45,6 +45,9 @@ fn update() {
 
     for e in events {
       match e {
+        archipelago_rs::Event::DeathLink { .. } => {
+          temp_state.deathlink_triggered = true;
+        }
         archipelago_rs::Event::ReceivedItems(i) => {
           let new_items: Vec<_> = client
             .client()
@@ -53,6 +56,9 @@ fn update() {
             .skip(i)
             .filter_map(|i| APItem::try_from(i.item().id()).ok())
             .collect();
+          if new_items.contains(&APItem::Patchup) {
+            temp_state.patchup_active = true;
+          }
           if new_items.contains(&APItem::TrapJam) {
             temp_state.gunjamed_timeout = Some(Instant::now() + Duration::from_secs(6));
           }

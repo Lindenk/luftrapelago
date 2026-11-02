@@ -53,6 +53,8 @@ pub fn hook_entry() {
       fix_hangar_screen();
       draw_mission_hints();
       apply_powerups_and_traps();
+      apply_player_mods();
+      hook_on_die();
     }
 
     EntryHook.call()
