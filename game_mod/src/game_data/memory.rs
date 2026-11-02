@@ -3,12 +3,9 @@ use std::{
   ops::Add,
 };
 
-use archipelago_rs::AsLocationId;
-use num_enum::TryFromPrimitive;
-
-use crate::{
-  archipelago::items::{APItem, BASE_ID},
-  game_data::plane::{BodyType, EngineType, Part, WeaponType},
+use crate::game_data::{
+  mission::{MissionCode, MissionDescriptor},
+  plane::{BodyType, EngineType, Part, WeaponType},
 };
 
 const GLOBAL_STATS_PTR: usize = 0x01ab3510;
@@ -65,56 +62,6 @@ enum PlayerOffsets {
   UnlockBuffer1 = 0x2770,
   UnlockBuffer2 = 0x2774,
   UnlockBuffer3 = 0x2778,
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct MissionDescriptor {
-  pub num: u8,
-  pub part: Part,
-  pub is_completed: bool,
-}
-
-impl MissionDescriptor {
-  pub fn to_location_id(&self) -> impl AsLocationId {
-    let mut id = BASE_ID;
-    id += self.num as i64;
-    id += match self.part {
-      Part::Weapon(w) => (w as i64) * 5,
-      Part::Body(b) => (b as i64) * 5 + 0x100,
-      Part::Engine(e) => (e as i64) * 5 + 0x200,
-    };
-
-    id
-  }
-  pub fn from_mission_code(code: u32) -> Option<Self> {
-    let (part, num) = parse_mission_code(code)?;
-    Some(Self {
-      part,
-      num,
-      is_completed: false,
-    })
-  }
-}
-
-pub fn parse_mission_code(code: u32) -> Option<(Part, u8)> {
-  let part_type = code & 0xff;
-  let part_num = (code >> 8) & 0xff;
-  let mission_num = (code >> 16) & 0xff;
-
-  let part = match part_type {
-    0 => WeaponType::try_from_primitive(part_num as u8)
-      .ok()
-      .map(|w| Part::Weapon(w)),
-    1 => BodyType::try_from_primitive(part_num as u8)
-      .ok()
-      .map(|b| Part::Body(b)),
-    2 => EngineType::try_from_primitive(part_num as u8)
-      .ok()
-      .map(|e| Part::Engine(e)),
-    _ => None,
-  };
-
-  part.map(|p| (p, mission_num as u8))
 }
 
 impl GameMemory {
@@ -199,7 +146,6 @@ impl GameMemory {
         Weapon(w) => parts_bin |= 1 << (w as u8),
         Body(b) => parts_bin |= (1 << (b as u8)) << 8,
         Engine(e) => parts_bin |= (1 << (e as u8)) << 16,
-        _ => (),
       }
     }
 
@@ -285,37 +231,32 @@ impl GameMemory {
   //  self.read_i32(GlobalStatsOffsets::BestScore)
   //}
 
-  pub fn get_all_missions(&self) -> Vec<MissionDescriptor> {
+  fn read_missions(&self) -> impl Iterator<Item = *mut u32> {
     // there are exactly num_part_type * num_parts * 5 mission, or
     // 3 * 6 * 5 = 90 total
     // interate over them all in memory
     const STRIDE: usize = 40; // bytes
     let start = self.player_ptr.add(PlayerOffsets::MissionStart as usize);
+
+    (0..90).into_iter().map(move |i| {
+      let offset = i * STRIDE;
+      start.add(offset) as *mut u32
+    })
+  }
+
+  pub fn get_all_missions(&self) -> Vec<MissionDescriptor> {
     let mut missions = Vec::new();
 
-    for i in 0..90 {
-      let offset = i * STRIDE;
-      let mission_start = start.add(offset);
+    for m in self.read_missions() {
+      let mission_code = MissionCode(unsafe { *(m.byte_add(0x0) as *const u32) });
+      let is_completed = unsafe { *(m.byte_add(0x14) as *const u32) } > 0;
 
-      let mission_code = unsafe { *(mission_start.add(0x0) as *const u32) };
-      let is_completed = unsafe { *(mission_start.add(0x14) as *const u32) } > 0;
-
-      //println!("Parsing mission: {:?}", mission_code);
-
-      let (part, mission_num) = {
-        if let Some(code) = parse_mission_code(mission_code) {
-          code
-        } else {
-          println!("Failed to parse mission at: {:x}", mission_start);
-          continue;
-        }
-      };
-
-      missions.push(MissionDescriptor {
-        part,
-        num: mission_num,
-        is_completed,
-      });
+      if let Ok(mut desc) = MissionDescriptor::try_from(mission_code) {
+        desc.is_completed = is_completed;
+        missions.push(desc);
+      } else {
+        println!("Failed to parse mission at: {:x}", m as usize);
+      }
     }
 
     missions
@@ -341,5 +282,16 @@ impl GameMemory {
     }
 
     missions
+  }
+
+  pub fn set_missions_completed(&self, missions: impl Iterator<Item = MissionDescriptor>) {
+    let missions: HashSet<_> = missions.map(|m| MissionCode::from(m).0).collect();
+
+    unsafe {
+      self
+        .read_missions()
+        .filter(|p| missions.contains(&p.read_volatile()))
+        .for_each(|p| p.byte_offset(0x14).write_volatile(1));
+    }
   }
 }

@@ -3,7 +3,12 @@ use std::{
   time::{Duration, Instant},
 };
 
-use crate::{archipelago::items::APItem, define_detour_hooks, mods::check_hints, state::GameState};
+use crate::{
+  archipelago::items::APItem,
+  define_detour_hooks,
+  mods::{check_hints, check_missions},
+  state::GameState,
+};
 
 define_detour_hooks! {
   static UpdateTick: extern "thiscall" fn(*mut std::ffi::c_void) -> () => 0xa1510;
@@ -72,6 +77,7 @@ fn update() {
     }
   });
 
-  // TODO: Bind this somewhere more sane
+  // TODO: Bind these somewhere more sane
   check_hints();
+  check_missions();
 }

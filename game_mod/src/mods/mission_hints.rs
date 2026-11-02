@@ -5,7 +5,10 @@ use archipelago_rs::AsLocationId;
 use crate::{
   define_detour_hooks,
   fn_hook::get_base_address,
-  game_data::{game_string::GameString, memory::MissionDescriptor},
+  game_data::{
+    game_string::GameString,
+    mission::{MissionCode, MissionDescriptor},
+  },
   patcher::CodePatch,
   state::GameState,
 };
@@ -81,8 +84,8 @@ pub fn draw_mission_hints() {
     let s = GenerateMissionStringHook.call(this, that);
 
     // figure out what mission location this is
-    let mission_code = unsafe { *(this as *const u32) };
-    let mission = MissionDescriptor::from_mission_code(mission_code);
+    let mission_code = MissionCode(unsafe { *(this as *const u32) });
+    let mission = MissionDescriptor::try_from(mission_code);
 
     // get our hints
     enum Hint {
@@ -91,7 +94,7 @@ pub fn draw_mission_hints() {
       Locked,
       Invalid,
     }
-    let hint = if let Some(mission) = mission {
+    let hint = if let Ok(mission) = mission {
       GameState::with(|client, _, _| {
         if client.get_parts().find(|p| *p == mission.part).is_none() {
           return Hint::Locked;
@@ -101,7 +104,7 @@ pub fn draw_mission_hints() {
         client
           .client()
           .scouted_locations()
-          .find(|l| l.location().same_location(mission.to_location_id()))
+          .find(|l| l.location().same_location(mission.as_location_id()))
           .map(|l| {
             if *l.receiver() == player {
               Hint::Hint(l.item().name().to_string().to_lowercase())
@@ -191,7 +194,7 @@ pub fn check_hints() {
     let unhinted_missions: Vec<_> = active_missions
       .iter()
       .filter_map(|(_, m)| {
-        let id = m.to_location_id().as_location_id();
+        let id = m.as_location_id();
         scouted_locations.contains(&id).not().then_some(id)
       })
       .collect();
