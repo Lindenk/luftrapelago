@@ -31,10 +31,17 @@ pub fn apply_powerups_and_traps() {
 
       // weapon interval is stored at stats+0x1d*4, as an int
       let stats = stats as *mut i32;
+      let id = unsafe { stats.read_volatile() };
       unsafe {
         let interval_ptr = stats.add(0x1d);
         let mut interval = interval_ptr.read_volatile();
-        interval = (interval - firerate_items).max(1);
+
+        // for now give the cannon special treatment
+        if id == 4 {
+          interval -= 12 * firerate_items;
+        } else {
+          interval = (interval - firerate_items).max(1);
+        }
         interval_ptr.write_volatile(interval);
       }
       unsafe {
@@ -44,16 +51,15 @@ pub fn apply_powerups_and_traps() {
           numbullet_ptr.write_volatile(0);
         } else {
           let mut numbullets = numbullet_ptr.read_volatile();
-          numbullets += bullet_items;
+          numbullets += bullet_items * 5;
           numbullet_ptr.write_volatile(numbullets);
         }
       }
       unsafe {
-        // increase max bullets to compensate for powerups
-        // (matters the most for missles)
+        // increase max bullets too  (for missles)
         let maxbullets_ptr = stats.add(0x1e);
         let mut maxbullets = maxbullets_ptr.read_volatile();
-        maxbullets *= bullet_items * firerate_items;
+        maxbullets += bullet_items;
         maxbullets_ptr.write_volatile(maxbullets);
       }
     });
