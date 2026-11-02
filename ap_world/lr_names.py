@@ -101,7 +101,7 @@ def _load_unique_planes():
     with open(planes_file) as f:
         planes = json.load(f)
 
-    return OrderedDict((f"Completion {name}", build) for name, build in planes.items())
+    return OrderedDict((f"Completion: {name.upper()}", build) for name, build in planes.items())
 
 
 unique_planes: "OrderedDict[str, dict[str, int]]" = _load_unique_planes()

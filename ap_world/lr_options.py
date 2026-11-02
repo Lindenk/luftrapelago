@@ -20,31 +20,36 @@ class Goal(Choice):
     """
     The victory condition:
 
-    URauser                   Gather the CLASSIFIED plane parts and launch the URauser
-    Unique Blimp Kills        Defeat the Blimp with X unique planes
-    Unique CLASSIFIED1 Kills  Defeat the CLASSIFIED 1 with X unique planes
-    Unique CLASSIFIED2 Kills  Defeat the CLASSIFIED 2 with X unique planes
-    Score Attack              Reach X score in one run
-    Score Total               Reach X total score (across all runs)
+
+    **URauser:** Gather the CLASSIFIED plane parts and launch the URauser
+
+    **Completions:** Satisfy the completion condition for X unique planes
     """
 
     display_name = "Goal"
+    rich_text_doc = True
     option_urauser = 0
-    option_unique_blimp_kills = 1
-    option_unique_classified1_kills = 2
-    option_unique_classified2_kills = 3
-    option_score_attack = 4
-    option_score_total = 5
+    option_completions = 1
 
-
-class RequiredUniquePlanes(Range):
+class CompletionCondition(Choice):
     """
-    The number of unique plane builds that must be used for the Unique Blimp Kills,
-    Unique CLASSIFIED1 Kills, and Unique CLASSIFIED2 Kills goals. For other goals, it
-    signifies the number of checks behind unique build blimp kills.
+    What counts as a "Completion" for a plane.
 
-    If Use Unique Completion Checks is enabled, this many random builds will
-    be required instead
+
+    **Blimp:** Kill a blimp
+
+    **Score Attack:** Reach X score
+    """
+    display_name = "Completion Condition"
+    rich_text_doc = True
+    option_blimp = 0
+    option_score_attack = 10
+
+class RequiredCompletions(Range):
+    """
+    The number of unique plane builds that must earn a completion.
+
+    If Use Unique Completion Checks is enabled, this many random builds will be required instead.
     """
 
     display_name = "Required Unique Planes"
@@ -55,42 +60,38 @@ class RequiredUniquePlanes(Range):
 
 class RequiredScore(Range):
     """
-    The score needed for Score Attack and Score Total goals. As a rule of thumb, a
-    score of 30,000 is a very strong single run, and a total score of 250,000 per
-    hour can be expected for a seasoned player.
-    Does nothing for other goals.
+    The score needed for Score Attack completions. Does nothing if score attack is not the completion condition.
     """
 
     display_name = "Required Score"
     range_start = 1000
-    range_end = 10_000_000
+    range_end = 500_000
     default = 30_000
 
 
 # Sanity options
 class Missionsanity(Toggle):
     """
-    Randomize missions (somewhat sanely). Not for the faint of heart.
+    Randomize mission criteria.
     """
 
     display_name = "Missionsanity"
 
 
 # Item options
-class RandomizeStartingLoadout(DefaultOnToggle):
+class RandomizeStartingLoadout(Toggle):
     """
-    Randomize your starting parts (not including CLASSIFIED parts)
+    Randomize your starting parts (not including CLASSIFIED parts).
+
+    If **not** randomizing missions, this can lead to very difficult starting missions.
     """
 
     display_name = "Randomize Starting Loadout"
+    rich_text_doc = True
 
 class EnableRankKeys(DefaultOnToggle):
     """
-    The default game progression locks off parts and missions until specific enemies
-    have been defeated for the first time. For Archipelago, these requirements are
-    lifted entirely, however progressive Rank Keys can be included in the pool,
-    preventing completion of later missions for each part until another rank key
-    is found.
+    The default game progression locks off parts and missions until specific enemies have been defeated for the first time. For Archipelago, these requirements are lifted entirely, however progressive Rank Keys can be included in the pool, preventing completion of later missions for each part until another rank key is found.
     """
 
     display_name = "Enable Rank Keys"
@@ -98,9 +99,7 @@ class EnableRankKeys(DefaultOnToggle):
 
 class RankKeyMissionLock(Range):
     """
-    Which missions are blocked off by rank keys, out of the five total for each
-    part. For example, '3' means missions 3, 4, and 5 are locked until 1, 2, and
-    3 keys are found (respectively).
+    Which missions are blocked off by rank keys, out of the five total for each part. For example, '3' means missions 3, 4, and 5 are locked until 1, 2, and 3 keys are found (respectively).
     """
 
     display_name = "Rank Key Minimum Mission"
@@ -121,39 +120,32 @@ class ExtraRankKeys(Range):
 
 class UseUniqueCompletionChecks(Toggle):
     """
-    Put checks at unique completions (ie. blimp kills by default).
+    Put checks at specific completions.
 
-    For example, this would mean getting a blimp kill the Original would
-    away a check specifically for getting a blimp kill with the Original,
-    and not other plane build, vs getting a check for the first unique blimp
-    kill, second, etc, without depending on the specific build that got it.
-
-    Recommended to have off, otherwise all unique completions will be checks
+    For example, this would mean getting a blimp kill with The Original would give a check specifically for getting a blimp kill with the Original, instead of getting a check for the first unique blimp kill, second, etc, without depending on the specific build that got it.
     """
     display_name = "Use Unique Completion Checks"
 
 class StartingHealth(Range):
     """
-    How much to scale your starting Health (in percent). Lower values make
-    you weaker to start, higher values make you stronger.
+    How much to scale your starting Health (in percent). Lower values make you weaker to start, higher values make you stronger.
     """
 
     display_name = "Starting Health"
     range_start = 10
     range_end = 200
-    default = 50
+    default = 80
 
 
 class PowerupHealth(Range):
     """
-    The number of bonus heath up items to mix into the pool. Makes the game easier
-    as these are found.
+    The number of bonus heath up items to mix into the pool. Makes the game easier as these are found.
     """
 
     display_name = "Powerup Health"
     range_start = 0
-    range_end = 10
-    default = 4
+    range_end = 20
+    default = 6
 
 class PowerupHealthBonus(Range):
     """
@@ -168,25 +160,23 @@ class PowerupHealthBonus(Range):
 
 class PowerupFireRate(Range):
     """
-    The number of bonus fire rate up items to mix into the pool. Makes the game easier
-    as these are found.
+    The number of bonus fire rate up items to mix into the pool. Makes the game easier as these are found.
     """
 
     display_name = "Powerup Fire Rate"
     range_start = 0
     range_end = 10
-    default = 3
+    default = 4
 
 class PowerupBullets(Range):
     """
-    The number of bonus bullet ups to mix into the pool. Makes the game easier
-    as these are found
+    The number of bonus bullet ups to mix into the pool. Makes the game easier as these are found
     """
 
     display_name = "Powerup Bullets"
     range_start = 0
     range_end = 10
-    default = 3
+    default = 4
 
 
 class FillerWeights(OptionCounter):
@@ -215,8 +205,7 @@ class FillerWeights(OptionCounter):
 # Link options
 class DeathLink(Choice):
     """
-    When you die a configurable number of times, everyone dies. When any other
-    deathlink player dies, you die.
+    When you die a configurable number of times, everyone dies. When any other deathlink player dies, you die.
     """
 
     display_name = "Death Link"
@@ -238,7 +227,8 @@ class DeathLinkCounter(Range):
 @dataclass
 class LuftrausersOptions(PerGameCommonOptions):
     goal: Goal
-    required_unique_planes: RequiredUniquePlanes
+    completion_condition: CompletionCondition
+    required_completions: RequiredCompletions
     required_score: RequiredScore
     randomize_starting_loadout: RandomizeStartingLoadout
     missionsanity: Missionsanity
@@ -257,7 +247,7 @@ class LuftrausersOptions(PerGameCommonOptions):
 
 
 luftrausers_option_groups: list[OptionGroup] = [
-    # OptionGroup("Game", [Goal, RequiredUniquePlanes, RequiredScore]),
+    # OptionGroup("Game", [Goal, CompletionCondition, RequiredUniquePlanes, RequiredScore]),
     OptionGroup("Sanity", [Missionsanity]),
     OptionGroup(
         "Items",

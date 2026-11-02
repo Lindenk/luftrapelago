@@ -8,6 +8,7 @@ from . import lr_names
 from .lr_items import LuftrausersItem, item_groups, item_table, misc, parts, powerups
 from .lr_locations import (
     LuftrausersLocation,
+    LuftrausersLocationData,
     all_locations,
     generic_completion_locations,
     location_groups,
@@ -55,7 +56,7 @@ class LuftrausersWorld(World):
         super().__init__(multiworld, player)
 
         self.excluded_locations: list[str] = []
-        self.unique_completion_locations: list[str] = []
+        self.unique_completion_locations: list[LuftrausersLocationData] = []
 
     def generate_early(self) -> None:
         options: LuftrausersOptions = cast(LuftrausersOptions, self.options)
@@ -67,16 +68,16 @@ class LuftrausersWorld(World):
             self.excluded_locations.extend(lr_names.generic_completions)
 
             # add in random unique completions up to the set amount
-            completions = [c.name for c in unique_completion_locations]
+            completions = list(unique_completion_locations)
             self.random.shuffle(completions)
-            self.unique_completion_locations.extend(completions[:options.required_unique_planes])
-            self.excluded_locations.extend(completions[options.required_unique_planes:])
+            self.unique_completion_locations.extend(completions[:options.required_completions])
+            self.excluded_locations.extend([c.name for c in completions[options.required_completions:]])
         else:
             # allow all unique completions (because they'll just give tokens used for
             #   the real checks)
-            self.unique_completion_locations.extend([c.name for c in unique_completion_locations])
+            self.unique_completion_locations.extend(list(unique_completion_locations))
             # add in generic completions up to what's set in options
-            self.excluded_locations.extend(lr_names.generic_completions[options.required_unique_planes :])
+            self.excluded_locations.extend(lr_names.generic_completions[options.required_completions :])
 
     def create_regions(self) -> None:
         """
@@ -242,9 +243,10 @@ class LuftrausersWorld(World):
 
         # difficulty logic. Ensure the player has enough powerups before expecting completions
         total_powerups = options.powerup_health + options.powerup_fire_rate + options.powerup_bullets
-        for c in lr_names.generic_completions[: options.required_unique_planes]:
+        for c in self.unique_completion_locations:
             add_rule(
-                self.get_location(c), lambda state: state.has_group("Powerups", self.player, count=total_powerups // 2)
+                self.get_location(c.name), lambda state:
+                  state.has_group("Powerups", self.player, count=total_powerups // 2)
             )
 
         # Set goal
@@ -262,31 +264,17 @@ class LuftrausersWorld(World):
                     self.player,
                 ),
             )
-        elif options.goal in [1, 2, 3]:  # Unique 'completions'
+        elif options.goal == 1:  # Unique completions
             if options.use_unique_completion_checks:
               pass
             else:
               loc = self.get_location(lr_names.VictoryLocations.FinishedUniqueCompletions)
               add_rule(loc, lambda state: state.has(lr_names.MiscItems.CompletionToken, self.player,
-                count=int(options.required_unique_planes)))
+                count=int(options.required_completions)))
 
-            loc_completion = lr_names.generic_completions[options.required_unique_planes - 1]
+            loc_completion = lr_names.generic_completions[options.required_completions - 1]
             loc = self.get_location(lr_names.VictoryLocations.FinishedUniqueCompletions)
             add_rule(loc, lambda state: state.can_reach_location(loc_completion, self.player))
-        elif options.goal in [4, 5]:  # Score based
-            loc = self.get_location(lr_names.VictoryLocations.ScoreAttack)
-            # assume the player must get all powerups to acheive the score
-            add_rule(
-                loc,
-                lambda state: state.has_all_counts(
-                    {
-                        lr_names.Bonuses.PowerupHealth: int(options.powerup_health),
-                        lr_names.Bonuses.PowerupFireRate: int(options.powerup_fire_rate),
-                        lr_names.Bonuses.PowerupFireRate: int(options.powerup_bullets),
-                    },
-                    self.player,
-                ),
-            )
         else:
             raise Exception("Somehow no goal was set")
 
@@ -300,22 +288,25 @@ class LuftrausersWorld(World):
 
         # manually creating this to decouple it from future options changes
         if options.goal == 0:
-            goal = {"name": "urauser"}
+            goal = "urauser"
         elif options.goal == 1:
-            goal = {"name": "unique_blimp_kills", "planes": options.required_unique_planes.value}
-        elif options.goal == 2:
-            goal = {"name": "unique_classified1_kills", "planes": options.required_unique_planes.value}
-        elif options.goal == 3:
-            goal = {"name": "unique_classified2_kills", "planes": options.required_unique_planes.value}
-        elif options.goal == 4:
-            goal = {"name": "score_attack", "score": options.required_score.value}
-        elif options.goal == 5:
-            goal = {"name": "score_total", "score": options.required_score.value}
+            goal = "completions"
         else:
             raise Exception("Somehow no goal was set")
 
+        if options.completion_condition == 0: # blimp kill
+          completion_condition = "blimp"
+        elif options.completion_condition == 10:
+          completion_condition = "score"
+        else:
+          raise Exception("Somehow no valid completion condition was set")
+
         data = {
             "goal": goal,
+            "completion_condition": completion_condition,
+            "completion_locations": [c.code for c in self.unique_completion_locations],
+            "completion_score": options.required_score.value,
+            "send_generic_completions": not options.use_unique_completion_checks,
             "starting_health": options.starting_health.value,
             "powerup_bonuses": {
                 "health": options.powerup_health_bonus.value,
