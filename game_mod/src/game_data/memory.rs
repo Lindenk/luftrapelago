@@ -22,6 +22,7 @@ pub struct GameMemory {
 enum GlobalStatsOffsets {
   EnableHangar = 0x10, // 8-bit, 1 = enable
   TutorialFlag = 0x14, // this is set elsewhere because it has to init other stuff too
+  SFMTEnable = 0x18,
   GamesPlayed = 0x20,
   //PlayerLevel = 0x32,    // 16-bit int
   LastTime = 0x4c,
