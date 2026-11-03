@@ -135,6 +135,10 @@ impl GameMemory {
     self.write_global_stats(GlobalStatsOffsets::EnableHangar, 1u8);
   }
 
+  pub fn disable_tutorial(&self) {
+    self.write_global_stats(GlobalStatsOffsets::TutorialFlag, 1u8);
+  }
+
   pub fn get_current_run_score(&self) -> u32 {
     self.read_player_stats(PlayerOffsets::CurrentScore)
   }
