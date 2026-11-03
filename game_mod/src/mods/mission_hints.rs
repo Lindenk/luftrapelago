@@ -28,57 +28,6 @@ pub fn draw_mission_hints() {
     unsafe { CodePatch::at(addr).continuation(end_addr).write() };
   }
 
-  // Disable mission text and hints if the part isn't unlocked yet
-  /*unsafe {
-    // the check for if we have a blimp kill. Replace the condition with an
-    // unlock check and display own our own text
-    let addr = (get_base_address() + 0xaf9a2) as *mut u8;
-    let false_branch_addr = (get_base_address() + 0xaf9d6) as *mut u8;
-    let true_branch_addr = (get_base_address() + 0xb00ac) as *mut u8;
-
-    let mut patch = vec![
-      0x9C, 0x60, // push fd, ad
-      0x89, 0xD9, // load the mission descriptor into ecx (from ebx)
-      0x8B, 0x55, 0x0C, // load the string ptr into edx
-      0xb8, // prep for our fn call
-    ];
-    let fn_addr =
-      check_mission_locked_text as extern "fastcall" fn(*const u8, *mut u8) -> bool as u32;
-    patch.extend(fn_addr.to_le_bytes());
-    patch.extend_from_slice(&[
-      0xff, 0xd0, // call eax
-      0x84, 0xc0, // test al
-    ]);
-
-    let post_branch_cleanup = vec![
-      0x61, 0x9D, // pop add, fd
-    ]; // + 5 bytes for absolute jump after cleanup
-
-    let false_branch_offset = (post_branch_cleanup.len() + 8) as i32;
-    patch.extend_from_slice(&[0x0f, 0x84]); // jz
-    patch.extend(false_branch_offset.to_le_bytes());
-
-    // write in the true branch
-    patch.extend_from_slice(&post_branch_cleanup);
-    patch.extend_from_slice(&[0x8b, 0x7d, 0x0c]); // put the str back in edi
-    let true_branch_offset = (true_branch_addr as usize - (addr as usize + patch.len() + 5)) as i32;
-    patch.push(0xe9); // jmp
-    patch.extend(true_branch_offset.to_le_bytes());
-
-    // write in the false branch
-    patch.extend(post_branch_cleanup);
-    let false_branch_offset =
-      (false_branch_addr as usize - (addr as usize + patch.len() + 5)) as i32;
-    patch.push(0xe9); // jmp
-    patch.extend(false_branch_offset.to_le_bytes());
-
-    // sanity check
-    assert!((false_branch_addr as usize > (addr as usize + patch.len())));
-
-    // write it in
-    patch_memory(addr, &patch);
-  }*/
-
   // append our hints to the mission text (when it gets generated)
   let _ = GenerateMissionStringHook.init_with_self(|this, that| {
     let s = GenerateMissionStringHook.call(this, that);
@@ -143,41 +92,6 @@ pub fn draw_mission_hints() {
   });
   let _ = unsafe { GenerateMissionStringHook.enable() };
 }
-
-// see if we should block off this mission text
-/*
-extern "fastcall" fn check_mission_locked_text(this: *const u8, msg: *mut u8) -> bool {
-  println!("Calling check mission locked text");
-
-  let mission_code = unsafe { (this as *const u32).read_volatile() };
-  let mission = if let Some(m) = MissionDescriptor::from_mission_code(mission_code) {
-    m
-  } else {
-    return false;
-  };
-
-  println!("Str ptr: {:x}", msg as u32);
-
-  GameState::with(|client, _| {
-    if client.get_parts().find(|p| *p == mission.part).is_none() {
-      //let new_str = GameString::from_str("part locked");
-
-      // init the string ptr
-
-      unsafe {
-        (msg.add(0x10) as *mut u32).write_volatile(0);
-        (msg.add(0x14) as *mut u32).write_volatile(0x0f);
-        msg.write_volatile(0);
-      }
-
-      GameString::assign_from_str(msg, "part locked");
-      true
-    } else {
-      false
-    }
-  })
-  .unwrap_or(true)
-}*/
 
 // TODO: Hook this in somewhere sane, like at the end of a round
 pub fn check_hints() {
