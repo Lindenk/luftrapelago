@@ -37,6 +37,10 @@ pub fn init_mod(ap_client: APClient) {
 
         // set our default loadout if the save doesn't have unlocked parts equipped
         set_default_parts(memory, &unlocked_parts);
+
+        // run one update tick to fetch one-time items that we don't want
+        // to trigger at the start
+        client.client().update();
       });
     }
 

@@ -5,7 +5,7 @@ use std::{
 
 use crate::game_data::{
   mission::{MissionCode, MissionDescriptor},
-  plane::{BodyType, EngineType, Part, WeaponType},
+  plane::{BodyType, EngineType, Part, Plane, WeaponType},
 };
 
 const GLOBAL_STATS_PTR: usize = 0x01ab3510;
@@ -39,6 +39,7 @@ enum GlobalStatsOffsets {
 #[repr(usize)]
 #[derive(Copy, Clone)]
 enum PlayerOffsets {
+  CurrentScore = 0x14,
   QueuedNotifications = 0x18, // ?
   GamesPlayed = 0x20,
   TotalScore = 0x24,
@@ -54,14 +55,11 @@ enum PlayerOffsets {
   BestScore = 0x44,
   //BestCombo = 0x48,
   LastFightersKilled = 0x58,
+  LastBlimpsKilled = 0x78,
   // ...
   TotalFightersKilled = 0x8c,
   // ...
   MissionStart = 0xc8,
-
-  UnlockBuffer1 = 0x2770,
-  UnlockBuffer2 = 0x2774,
-  UnlockBuffer3 = 0x2778,
 }
 
 impl GameMemory {
@@ -136,6 +134,21 @@ impl GameMemory {
     self.write_global_stats(GlobalStatsOffsets::EnableHangar, 1u8);
   }
 
+  pub fn get_current_run_score(&self) -> u32 {
+    self.read_player_stats(PlayerOffsets::CurrentScore)
+  }
+
+  pub fn get_blimp_kills(&self) -> u32 {
+    //for x in (0..0x58).step_by(4) {
+    //  unsafe {
+    //    let ptr = self.player_ptr.add(x) as *mut u32;
+    //    println!("Offset 0x{:x}: {}", x, ptr.read_volatile());
+    //  }
+    //}
+
+    self.read_player_stats(PlayerOffsets::LastBlimpsKilled)
+  }
+
   pub fn set_unlocked_parts<P: Iterator<Item = Part>>(&self, parts: P) {
     // calc the full set of unlocked parts
     let mut parts_bin = 0i32;
@@ -191,6 +204,21 @@ impl GameMemory {
   pub fn get_equipped_engine(&self) -> Option<EngineType> {
     let e: u8 = self.read_player_stats(PlayerOffsets::EquippedEngine);
     EngineType::try_from(e).ok()
+  }
+
+  pub fn get_equipped_loadout(&self) -> Option<Plane> {
+    match (
+      self.get_equipped_weapon(),
+      self.get_equipped_body(),
+      self.get_equipped_engine(),
+    ) {
+      (Some(weapon), Some(body), Some(engine)) => Some(Plane {
+        weapon,
+        body,
+        engine,
+      }),
+      _ => None,
+    }
   }
 
   /*

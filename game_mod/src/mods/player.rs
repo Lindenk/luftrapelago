@@ -1,6 +1,6 @@
 use std::ffi::c_void;
 
-use crate::{define_detour_hooks, state::GameState};
+use crate::{define_detour_hooks, mods::check_completion, state::GameState};
 
 define_detour_hooks! {
   static PlayerUpdate: extern "thiscall" fn(*mut c_void) -> () => 0xd05d0;
@@ -25,6 +25,8 @@ pub fn apply_player_mods() {
         }
       });
     }
+
+    check_completion();
 
     PlayerUpdateHook.call(player as *mut c_void);
   });

@@ -101,14 +101,13 @@ impl TryFrom<Part> for EngineType {
   }
 }
 
-/*
-#[derive(Debug, Hash, Eq, PartialEq, PartialOrd, Ord)]
-pub struct PlaneConfig {
-  weapon: WeaponType,
-  body: BodyType,
-  engine: EngineType,
+#[derive(Debug, Hash, Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
+pub struct Plane {
+  pub weapon: WeaponType,
+  pub body: BodyType,
+  pub engine: EngineType,
 }
-
+/*
 impl PlaneConfig {
   pub fn name(&self) -> Option<&str> {
     let code = (self.weapon as u32) << 16 | (self.body as u32) << 8 | (self.engine as u32);
