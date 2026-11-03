@@ -55,6 +55,7 @@ pub fn hook_entry() {
       apply_powerups_and_traps();
       apply_player_mods();
       hook_on_die();
+      set_up_rank_keys();
     }
 
     EntryHook.call()

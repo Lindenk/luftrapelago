@@ -40,16 +40,8 @@ pub fn draw_mission_hints() {
     patch_memory(addr, &[0xeb]); // skip the mission 5 check
   }
 
-  // sfmt and blimp kill mission check
-  unsafe {
-    let addr = (get_base_address() + 0xaf917) as *mut u8;
-    patch_memory(addr, &[0xb0, 0x00, 0xc3]); // force return false
-  }
-  // mission text highlighting
-  unsafe {
-    let addr = (get_base_address() + 0xb169a) as *mut u8;
-    patch_memory(addr, &[0xe9, 0x70, 0x01, 0x00, 0x00]); // skip the sfmt/blimp checks
-  }
+  // additional sfmt check skips are under rank_keys, because it's
+  // effectively the same logic
 
   // append our hints to the mission text (when it gets generated)
   let _ = GenerateMissionStringHook.init_with_self(|this, that| {
@@ -64,6 +56,7 @@ pub fn draw_mission_hints() {
       Hint(String),
       Completed,
       Pending,
+      RankLocked,
       Locked,
       Invalid,
     }
@@ -74,6 +67,9 @@ pub fn draw_mission_hints() {
         }
         if mission.num >= 5 {
           return Hint::Completed;
+        }
+        if !client.has_enough_rank_keys(mission.num) {
+          return Hint::RankLocked;
         }
 
         let player = client.client().this_player().clone();
@@ -105,6 +101,10 @@ pub fn draw_mission_hints() {
       Hint::Pending => "fetching hint...".to_string(),
       Hint::Invalid => {
         format!("invalid mission! {:x}", mission_code)
+      }
+      Hint::RankLocked => {
+        GameString::assign_from_str(s, "more rank keys required");
+        return s;
       }
       Hint::Locked => {
         GameString::assign_from_str(s, "part locked");

@@ -150,4 +150,23 @@ impl APClient {
   pub fn get_parts(&self) -> impl Iterator<Item = Part> {
     self.get_items().filter_map(|i| Part::try_from(i).ok())
   }
+  pub fn has_enough_rank_keys(&self, mission_num: u8) -> bool {
+    if let Some(mission_lock) = self
+      .connection
+      .client()
+      .unwrap()
+      .slot_data()
+      .rank_key_mission_lock
+    {
+      let num_keys = self
+        .get_items()
+        .filter(|i| matches!(i, APItem::ProgressiveRank))
+        .count() as u8;
+
+      // since mission_num starts at 0, we'd be off by 1
+      mission_num < mission_lock + num_keys - 1
+    } else {
+      true // rank keys are disabled
+    }
+  }
 }
