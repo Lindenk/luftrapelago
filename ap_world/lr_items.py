@@ -49,7 +49,7 @@ misc: dict[str, LuftrausersItemData] = {
 
 filler: list[LuftrausersItemData] = [
     LuftrausersItemData(0x0100, Filler.Patchup, ItemClassification.filler),
-    LuftrausersItemData(0x0101, Filler.Blank, ItemClassification.filler),
+    #LuftrausersItemData(0x0101, Filler.Blank, ItemClassification.filler),
 ]
 
 traps: list[LuftrausersItemData] = [
