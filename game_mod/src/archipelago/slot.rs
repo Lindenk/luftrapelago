@@ -30,6 +30,7 @@ pub struct SlotData {
   pub send_generic_completions: bool,
   pub starting_health: u16,
   pub powerup_bonuses: PowerupBonuses,
+  pub enable_sfmt: bool,
   pub rank_key_mission_lock: Option<u8>,
   pub deathlink_counter: Option<u8>,
 }

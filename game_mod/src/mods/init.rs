@@ -30,6 +30,7 @@ pub fn init_mod(ap_client: APClient) {
       GameState::init(client, GameMemory::init());
       GameState::with(|client, memory, _| {
         memory.enable_hangar();
+        memory.set_sfmt(client.client().slot_data().enable_sfmt);
 
         // update our unlocked parts
         let unlocked_parts: Vec<_> = client.get_parts().collect();

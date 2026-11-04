@@ -178,6 +178,15 @@ class PowerupBullets(Range):
     range_end = 10
     default = 4
 
+class EnableSFMT(Toggle):
+  """
+  Enable SFMT mode.
+
+  Makes the game **MUCH** more difficult. The setting is only set at start and can be changed in game
+  """
+  display_name =  "Enable SFMT mode"
+  rich_text_doc = True
+
 
 class FillerWeights(OptionCounter):
     """
@@ -241,6 +250,7 @@ class LuftrausersOptions(PerGameCommonOptions):
     powerup_health_bonus: PowerupHealthBonus
     powerup_fire_rate: PowerupFireRate
     powerup_bullets: PowerupBullets
+    enable_sfmt: EnableSFMT
     filler_weights: FillerWeights
     deathlink: DeathLink
     deathlink_counter: DeathLinkCounter
@@ -261,13 +271,14 @@ luftrausers_option_groups: list[OptionGroup] = [
         ],
     ),
     OptionGroup(
-        "Powerups",
+        "Powerups and Difficulty",
         [
           StartingHealth,
           PowerupHealth,
           PowerupHealthBonus,
           PowerupFireRate,
           PowerupBullets,
+          EnableSFMT
         ]
     )
 ]

@@ -22,6 +22,7 @@ pub struct GameMemory {
 enum GlobalStatsOffsets {
   EnableHangar = 0x10, // 8-bit, 1 = enable
   TutorialFlag = 0x14, // this is set elsewhere because it has to init other stuff too
+  SFMTOptionEnable = 0x17,
   SFMTEnable = 0x18,
   GamesPlayed = 0x20,
   //PlayerLevel = 0x32,    // 16-bit int
@@ -135,8 +136,9 @@ impl GameMemory {
     self.write_global_stats(GlobalStatsOffsets::EnableHangar, 1u8);
   }
 
-  pub fn disable_tutorial(&self) {
-    self.write_global_stats(GlobalStatsOffsets::TutorialFlag, 1u8);
+  pub fn set_sfmt(&self, enabled: bool) {
+    self.write_global_stats(GlobalStatsOffsets::SFMTOptionEnable, 1u8);
+    self.write_global_stats(GlobalStatsOffsets::SFMTEnable, enabled as u8);
   }
 
   pub fn get_current_run_score(&self) -> u32 {
