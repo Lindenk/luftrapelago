@@ -56,7 +56,7 @@ class Filler(NameBase):
 
 
 class MiscItems(NameBase):
-    ProgressiveRank = "Progressive Rank"
+    ProgressiveRank = "Rank Key"
     Victory = "Victory"
     CompletionToken = "Completion Token"
 

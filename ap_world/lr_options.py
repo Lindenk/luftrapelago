@@ -49,6 +49,8 @@ class RequiredCompletions(Range):
     """
     The number of unique plane builds that must earn a completion.
 
+    Each completion will be a check even if this is not the victory condition.
+
     If Use Unique Completion Checks is enabled, this many random builds will be required instead.
     """
 
@@ -73,6 +75,8 @@ class RequiredScore(Range):
 class Missionsanity(Toggle):
     """
     Randomize mission criteria.
+
+    Currently not implemented.
     """
 
     display_name = "Missionsanity"
@@ -91,16 +95,18 @@ class RandomizeStartingLoadout(Toggle):
 
 class EnableRankKeys(DefaultOnToggle):
     """
-    The default game progression locks off parts and missions until specific enemies have been defeated for the first time. For Archipelago, these requirements are lifted entirely, however progressive Rank Keys can be included in the pool, preventing completion of later missions for each part until another rank key is found.
-    """ # noqa: E501
+    Lock the later missions for each part behind keys.
+    """
 
     display_name = "Enable Rank Keys"
 
 
 class RankKeyMissionLock(Range):
     """
-    Which missions are blocked off by rank keys, out of the five total for each part. For example, '3' means missions 3, 4, and 5 are locked until 1, 2, and 3 keys are found (respectively).
-    """ # noqa: E501
+    Which missions are blocked off by rank keys, out of the five total for each part.
+
+    For example, '3' means missions 3, 4, and 5 are locked until 1, 2, and 3 keys are found (respectively).
+    """
 
     display_name = "Rank Key Minimum Mission"
     range_start = 2
@@ -170,7 +176,7 @@ class PowerupFireRate(Range):
 
 class PowerupBullets(Range):
     """
-    The number of bonus bullet ups to mix into the pool. Makes the game easier as these are found
+    The number of bonus bullet ups to mix into the pool. Makes the game easier as these are found.
     """
 
     display_name = "Powerup Bullets"
@@ -182,7 +188,7 @@ class EnableSFMT(Toggle):
   """
   Enable SFMT mode.
 
-  Makes the game **MUCH** more difficult. The setting is only set at start and can be changed in game
+  Makes the game **MUCH** more difficult. The setting is only set at start and can be changed in game.
   """
   display_name =  "Enable SFMT mode"
   rich_text_doc = True
@@ -190,7 +196,7 @@ class EnableSFMT(Toggle):
 
 class FillerWeights(OptionCounter):
     """
-    The weighting for each filler item (including traps)
+    The weighting for each filler item (including traps).
     """
 
     display_name = "Filler Weights"
