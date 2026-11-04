@@ -137,7 +137,7 @@ impl GameMemory {
   }
 
   pub fn set_sfmt(&self, enabled: bool) {
-    self.write_global_stats(GlobalStatsOffsets::SFMTOptionEnable, 1u8);
+    self.write_global_stats(GlobalStatsOffsets::SFMTOptionEnable, enabled as u8);
     self.write_global_stats(GlobalStatsOffsets::SFMTEnable, enabled as u8);
   }
 

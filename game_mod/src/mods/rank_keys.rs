@@ -28,13 +28,6 @@ pub fn set_up_rank_keys() {
       .append(&[0xc3]) //ret
       .write();
   }
-  // mission text highlighting
-  {
-    let addr = (get_base_address() + 0xb169a) as *mut u8;
-    let dest = (get_base_address() + 0xb180f) as *const u8;
-    //patch_memory(addr, &[0xe9, 0x70, 0x01, 0x00, 0x00]); // skip the sfmt/blimp checks
-    PatchBuilder::with_start_addr(addr).jump_to(dest).write();
-  }
 }
 
 // mimic the sfmt fn so we return true if this is an invalid mission

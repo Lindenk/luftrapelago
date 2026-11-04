@@ -22,7 +22,7 @@ pub fn draw_mission_hints() {
   // nop out the bit that draws the skulls on missions
   {
     let addr = (get_base_address() + 0xb2047) as *mut u8;
-    let end_addr = (get_base_address() + 0xb20e1) as *mut u8;
+    let end_addr = (get_base_address() + 0xb20e1) as *const u8;
     PatchBuilder::with_start_addr(addr)
       .jump_to(end_addr)
       .write();
@@ -42,6 +42,23 @@ pub fn draw_mission_hints() {
   unsafe {
     let addr = (get_base_address() + 0xafa0c) as *mut u8;
     patch_memory(addr, &[0xeb]); // skip the mission 5 check
+  }
+
+  // mission text highlighting
+  {
+    let addr = (get_base_address() + 0xb169a) as *mut u8;
+    let branch_false = (get_base_address() + 0xb180f) as *const u8;
+    let branch_true = (get_base_address() + 0xb16cf) as *const u8;
+    //patch_memory(addr, &[0xe9, 0x70, 0x01, 0x00, 0x00]); // skip the sfmt/blimp checks
+    PatchBuilder::with_start_addr(addr)
+      .push_all()
+      //.append(&[0x0f, 0xbe, 0xc8]) // movsx ecx, al (pass al to our function)
+      .append(&[0x8b, 0x4d, 0x0c]) // load the mission descriptor as an arg
+      .call(should_highlight as extern "fastcall" fn(*const u32) -> bool as u32)
+      .pop_jz(branch_false)
+      .pop_all()
+      .jump_to(branch_true)
+      .write();
   }
 
   // additional sfmt check skips are under rank_keys, because it's
@@ -136,6 +153,26 @@ pub fn draw_mission_hints() {
     s
   });
   let _ = unsafe { GenerateMissionStringHook.enable() };
+}
+
+extern "fastcall" fn should_highlight(mission: *const u32) -> bool {
+  let mission = MissionCode(unsafe { mission.read_volatile() });
+  if let Ok(mission) = MissionDescriptor::try_from(mission) {
+    GameState::with(|client, _, _| {
+      let rank_keys = client.has_enough_rank_keys(mission.num);
+      let urauser = matches!(
+        mission.part,
+        Part::Weapon(WeaponType::URauser)
+          | Part::Body(BodyType::URauser)
+          | Part::Engine(EngineType::URauser)
+      );
+      let unlocked = client.get_parts().find(|p| *p == mission.part).is_some();
+      !rank_keys || !unlocked || urauser
+    })
+    .unwrap_or(true)
+  } else {
+    true
+  }
 }
 
 pub fn check_hints() {
