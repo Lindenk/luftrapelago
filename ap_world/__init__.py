@@ -79,6 +79,14 @@ class LuftrausersWorld(World):
             # add in generic completions up to what's set in options
             self.excluded_locations.extend(lr_names.generic_completions[options.required_completions :])
 
+        # for now remove all the urauser mission checks
+        self.excluded_locations.extend([name for ((part, _), name) in lr_names.weapon_missions.items()
+          if part == lr_names.WeaponNames.URauserWeapon])
+        self.excluded_locations.extend([name for ((part, _), name) in lr_names.body_missions.items()
+          if part == lr_names.BodyNames.URauserBody])
+        self.excluded_locations.extend([name for ((part, _), name) in lr_names.engine_missions.items()
+          if part == lr_names.EngineNames.URauserEngine])
+
     def create_regions(self) -> None:
         """
         This game doesn't really have regions, so just make a menu region. Regions
@@ -178,7 +186,7 @@ class LuftrausersWorld(World):
 
         filler_map = {
             "Patch Up": lr_names.Filler.Patchup,
-            "Blank": lr_names.Filler.Blank,
+            #"Blank": lr_names.Filler.Blank,
             "Gun Jam Trap": lr_names.Filler.TrapJam,
             "Engine Stall Trap": lr_names.Filler.TrapStall,
         }
@@ -190,7 +198,7 @@ class LuftrausersWorld(World):
         options: LuftrausersOptions = cast(LuftrausersOptions, self.options)
 
         # Set mission rules
-        for mission in mission_locations:
+        for mission in (m for m in mission_locations if m.name not in self.excluded_locations):
             if mission.part_req:
                 part_req = cast(str, mission.part_req)
                 add_rule(
@@ -202,12 +210,13 @@ class LuftrausersWorld(World):
                 mission_num = cast(int, mission.mission_num)
                 # lock of 3 means 1 key is needed for mission 3, 2 for mission 4, etc
                 req_keys = mission_num - options.rank_key_mission_lock + 1
-                add_rule(
-                    self.get_location(mission.name),
-                    lambda state, req_keys=req_keys: state.has(
-                        lr_names.MiscItems.ProgressiveRank, self.player, count=req_keys
-                    ),
-                )
+                if req_keys > 0:
+                    add_rule(
+                        self.get_location(mission.name),
+                        lambda state, req_keys=req_keys: state.has(
+                            lr_names.MiscItems.ProgressiveRank, self.player, count=req_keys
+                        ),
+                    )
 
         # plane completions
         weapon_names = list(lr_names.WeaponNames)

@@ -18,7 +18,7 @@ from Options import Choice, DefaultOnToggle, OptionCounter, OptionGroup, PerGame
 # Goal options
 class Goal(Choice):
     """
-    The victory condition:
+    The victory condition.
 
 
     **URauser:** Gather the CLASSIFIED plane parts and launch the URauser
@@ -92,7 +92,7 @@ class RandomizeStartingLoadout(Toggle):
 class EnableRankKeys(DefaultOnToggle):
     """
     The default game progression locks off parts and missions until specific enemies have been defeated for the first time. For Archipelago, these requirements are lifted entirely, however progressive Rank Keys can be included in the pool, preventing completion of later missions for each part until another rank key is found.
-    """
+    """ # noqa: E501
 
     display_name = "Enable Rank Keys"
 
@@ -100,12 +100,12 @@ class EnableRankKeys(DefaultOnToggle):
 class RankKeyMissionLock(Range):
     """
     Which missions are blocked off by rank keys, out of the five total for each part. For example, '3' means missions 3, 4, and 5 are locked until 1, 2, and 3 keys are found (respectively).
-    """
+    """ # noqa: E501
 
     display_name = "Rank Key Minimum Mission"
     range_start = 2
     range_end = 5
-    default = 3
+    default = 4
 
 
 class ExtraRankKeys(Range):
@@ -123,13 +123,13 @@ class UseUniqueCompletionChecks(Toggle):
     Put checks at specific completions.
 
     For example, this would mean getting a blimp kill with The Original would give a check specifically for getting a blimp kill with the Original, instead of getting a check for the first unique blimp kill, second, etc, without depending on the specific build that got it.
-    """
+    """ # noqa: E501
     display_name = "Use Unique Completion Checks"
 
 class StartingHealth(Range):
     """
     How much to scale your starting Health (in percent). Lower values make you weaker to start, higher values make you stronger.
-    """
+    """ # noqa: E501
 
     display_name = "Starting Health"
     range_start = 10
@@ -187,16 +187,16 @@ class FillerWeights(OptionCounter):
     display_name = "Filler Weights"
 
     # Define valid keys directly so the UI and generator recognize them
-    valid_keys = {
+    valid_keys = (
         "Patch Up",
-        "Blank",
+        #"Blank",
         "Gun Jam Trap",
         "Engine Stall Trap",
-    }
+    )
 
-    default = {
+    default = { # noqa: RUF012
         "Patch Up": 5,
-        "Blank": 2,
+        #"Blank": 2,
         "Gun Jam Trap": 2,
         "Engine Stall Trap": 2,
     }

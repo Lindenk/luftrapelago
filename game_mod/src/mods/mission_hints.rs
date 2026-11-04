@@ -1,4 +1,4 @@
-use std::ops::Not;
+use std::{collections::HashMap, ops::Not};
 
 use archipelago_rs::AsLocationId;
 
@@ -8,6 +8,7 @@ use crate::{
   game_data::{
     game_string::GameString,
     mission::{MissionCode, MissionDescriptor},
+    plane::{BodyType, EngineType, Part, WeaponType},
   },
   patcher::{CodePatch, patch_memory},
   state::GameState,
@@ -58,10 +59,19 @@ pub fn draw_mission_hints() {
       Pending,
       RankLocked,
       Locked,
+      Removed,
       Invalid,
     }
     let hint = if let Ok(mission) = mission {
       GameState::with(|client, _, _| {
+        if matches!(
+          mission.part,
+          Part::Weapon(WeaponType::URauser)
+            | Part::Body(BodyType::URauser)
+            | Part::Engine(EngineType::URauser)
+        ) {
+          return Hint::Removed;
+        }
         if client.get_parts().find(|p| *p == mission.part).is_none() {
           return Hint::Locked;
         }
@@ -110,6 +120,10 @@ pub fn draw_mission_hints() {
         GameString::assign_from_str(s, "part locked");
         return s;
       }
+      Hint::Removed => {
+        GameString::assign_from_str(s, "All missions completed");
+        return s;
+      }
     };
 
     let gs = GameString::copy_from_game(s);
@@ -121,11 +135,22 @@ pub fn draw_mission_hints() {
   let _ = unsafe { GenerateMissionStringHook.enable() };
 }
 
-// TODO: Hook this in somewhere sane, like at the end of a round
 pub fn check_hints() {
   GameState::with(|client, memory, _| {
     let unlocked_parts: Vec<_> = client.get_parts().collect();
-    let active_missions = memory.get_all_active_missions(&unlocked_parts);
+    let active_missions: HashMap<_, _> = memory
+      .get_all_active_missions(&unlocked_parts)
+      .into_iter()
+      .filter(|(p, _)| {
+        !matches!(
+          p,
+          Part::Weapon(WeaponType::URauser)
+            | Part::Body(BodyType::URauser)
+            | Part::Engine(EngineType::URauser)
+        )
+      })
+      .filter(|(_, m)| client.has_enough_rank_keys(m.num))
+      .collect();
     //println!("Active missions: {:?}", active_missions);
     let scouted_locations: Vec<_> = client
       .client()
