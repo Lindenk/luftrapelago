@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Macros for hooking game functions
 
 use std::sync::OnceLock;

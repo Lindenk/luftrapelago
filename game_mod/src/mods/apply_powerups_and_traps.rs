@@ -1,12 +1,8 @@
-use std::{ffi::c_void, ops::Div, ptr::addr_of_mut};
-
-use windows::Win32::System::Memory::{
-  PAGE_EXECUTE_READWRITE, PAGE_PROTECTION_FLAGS, VirtualProtect,
-};
+use std::{ffi::c_void, ops::Div};
 
 use crate::{
   archipelago::items::APItem, define_detour_hooks, fn_hook::get_base_address,
-  patcher::patch_memory, state::GameState,
+  patcher::PatchBuilder, state::GameState,
 };
 
 define_detour_hooks! {
@@ -70,60 +66,35 @@ pub fn apply_powerups_and_traps() {
 
   // Detour hooks this function wrong so just hook the end manually. There's
   // 14 extra alignment bytes after the ret so we should have room
-  unsafe {
-    // addr of the ret
-    let addr = (get_base_address() + 0xd7e51) as *mut u8;
-    let mut patch = vec![
-      0x9C, 0x60, // push fd, ad
-      0x89, 0xC1, // mov ecx, eax (the returned pointer) for our arg
-      0xb8, // mov eax, set up the fn call
-    ];
-    let func_addr = modify_body_stats as extern "fastcall" fn(*mut f32) as u32;
-    patch.extend_from_slice(&func_addr.to_le_bytes());
-    patch.extend_from_slice(&[
-      0xFF, 0xD0, // call eax
-      0x61, 0x9D, // pop ad, fd
-      0xC3, // ret
-    ]);
 
-    // sanity check and patch
-    assert!(patch.len() <= 15);
-    patch_memory(addr, patch.as_slice());
+  // addr of the ret
+  {
+    let addr = (get_base_address() + 0xd7e51) as *mut u8;
+    let func_addr = modify_body_stats as extern "fastcall" fn(*mut f32) as u32;
+
+    PatchBuilder::with_start_addr(addr)
+      .push_all()
+      .append(&[0x89, 0xc1]) // mov ecx, eax (the returned pointer) for our arg
+      .call(func_addr)
+      .pop_all()
+      .append(&[0xc3]) // ret
+      .write();
   }
 
   // the engine stats also has this problem...damn. Only 8 bytes of alignment at
   // the end... Let's be a little creative with this I suppose
-  // allocate some const bytes and mark them as executable
-  static mut TRAMPOLINE: [u8; 14] = [
-    0x9C, 0x60, // push fd, ad
-    0x89, 0xC1, // mov ecx, eax (the returned pointer) for our arg
-    0xb8, // mov eax, set up the fn call
-    0x00, 0x00, 0x00, 0x00, // fn pointer that will be written
-    0xFF, 0xD0, // call eax
-    0x61, 0x9D, // pop ad, fd
-    0xC3, // ret
-  ];
-
-  unsafe {
-    let mut old = PAGE_PROTECTION_FLAGS(0);
-    let ptr = addr_of_mut!(TRAMPOLINE) as *mut c_void;
-    let _ = VirtualProtect(
-      ptr,
-      std::mem::size_of::<[u8; 14]>(),
-      PAGE_EXECUTE_READWRITE,
-      &mut old,
-    );
-
-    // write our fn into the trampoline
-    let fn_addr = modify_engine_stats as *const fn(*mut f32) as u32;
-    (ptr as *mut u32).byte_add(5).write_unaligned(fn_addr);
-
-    // write a jump to the trampoline over the ret (+ alignment bytes)
-    let hooked_addr = (get_base_address() + 0xd6d67) as *mut u8;
-    let trampoline_rel_addr = (ptr as i32) - (hooked_addr as i32 + 5);
-    let mut patch = vec![0xe9];
-    patch.extend_from_slice(&(trampoline_rel_addr as u32).to_le_bytes());
-    patch_memory(hooked_addr as *mut u8, patch.as_slice());
+  // ...by implementing a way to trampoline from the function tail!
+  // (I'm proud of this one so I'm keeping the comment)
+  {
+    let addr = (get_base_address() + 0xd6d67) as *mut u8;
+    PatchBuilder::with_start_addr(addr)
+      .use_trampoline()
+      .push_all()
+      .append(&[0x89, 0xC1]) // mov ecx, eax (the returned pointer) for our arg
+      .call(modify_engine_stats as *const fn(*mut f32) as u32)
+      .pop_all()
+      .append(&[0xc3]) // ret
+      .write();
   }
 }
 

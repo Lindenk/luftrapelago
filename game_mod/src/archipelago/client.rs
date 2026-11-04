@@ -44,7 +44,7 @@ impl APClient {
     let mut connection = loop {
       //let (server, slot, password) = Self::console_prompt();
       let (server, slot, password) = (
-        "localhost:63887".to_string(),
+        "localhost:57204".to_string(),
         "Pineapple_LRS".to_string(),
         "".to_string(),
       );

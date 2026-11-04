@@ -8,22 +8,14 @@ pub fn redirect_saves(path_suffix: &str) {
   let new_len = path.len() as u8;
   std::mem::forget(c_string);
 
-  // patch the string length in
+  // patch the save file string to include our ap seed (so it's custom for this apworld)
   unsafe {
-    if !patch_memory((get_base_address() + 0x248ee1) as *mut u8, &[new_len]) {
-      println!("Failed to patch string length!");
-      return;
-    }
+    patch_memory((get_base_address() + 0x248ee1) as *mut u8, &[new_len]);
 
     // patch the ptr to the save game location str
-    if !patch_memory(
+    patch_memory(
       (get_base_address() + 0x248ee3) as *mut u8,
       &new_ptr.to_le_bytes(),
-    ) {
-      println!("Failed to patch string pointer!");
-      return;
-    }
+    );
   }
-
-  println!("Successfully patched instructions for: {}", path);
 }

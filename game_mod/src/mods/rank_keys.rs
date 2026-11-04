@@ -1,4 +1,4 @@
-use crate::{fn_hook::get_base_address, patcher::patch_memory, state::GameState};
+use crate::{fn_hook::get_base_address, patcher::PatchBuilder, state::GameState};
 
 pub fn set_up_rank_keys() {
   // sfmt and blimp kill mission check
@@ -6,7 +6,7 @@ pub fn set_up_rank_keys() {
   //  let addr = (get_base_address() + 0xaf917) as *mut u8;
   //  patch_memory(addr, &[0xb0, 0x00, 0xc3]); // force return false
   //}
-  unsafe {
+  /*unsafe {
     let addr = (get_base_address() + 0xaf910) as *mut u8;
     let mut patch = vec![
       0x50, //push eax, the actual arg to our function
@@ -19,11 +19,21 @@ pub fn set_up_rank_keys() {
       0xc3, //ret
     ]);
     patch_memory(addr, &patch);
+  }*/
+  {
+    let addr = (get_base_address() + 0xaf910) as *mut u8;
+    PatchBuilder::with_start_addr(addr)
+      .append(&[0x50]) //push eax, the actual arg to our function
+      .call(check_keys as extern "stdcall" fn(*const i8) -> bool as u32)
+      .append(&[0xc3]) //ret
+      .write();
   }
   // mission text highlighting
-  unsafe {
+  {
     let addr = (get_base_address() + 0xb169a) as *mut u8;
-    patch_memory(addr, &[0xe9, 0x70, 0x01, 0x00, 0x00]); // skip the sfmt/blimp checks
+    let dest = (get_base_address() + 0xb180f) as *const u8;
+    //patch_memory(addr, &[0xe9, 0x70, 0x01, 0x00, 0x00]); // skip the sfmt/blimp checks
+    PatchBuilder::with_start_addr(addr).jump_to(dest).write();
   }
 }
 

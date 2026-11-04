@@ -320,7 +320,7 @@ class LuftrausersWorld(World):
             "powerup_bonuses": {
                 "health": options.powerup_health_bonus.value,
             },
-            "enable_sfmt": options.enable_sfmt.value
+            "enable_sfmt": options.enable_sfmt.value > 0
         }
 
         if options.enable_rank_keys:

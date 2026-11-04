@@ -10,7 +10,7 @@ use crate::{
     mission::{MissionCode, MissionDescriptor},
     plane::{BodyType, EngineType, Part, WeaponType},
   },
-  patcher::{CodePatch, patch_memory},
+  patcher::{PatchBuilder, patch_memory},
   state::GameState,
 };
 
@@ -23,7 +23,10 @@ pub fn draw_mission_hints() {
   {
     let addr = (get_base_address() + 0xb2047) as *mut u8;
     let end_addr = (get_base_address() + 0xb20e1) as *mut u8;
-    unsafe { CodePatch::at(addr).continuation(end_addr).write() };
+    PatchBuilder::with_start_addr(addr)
+      .jump_to(end_addr)
+      .write();
+    //unsafe { CodePatch::at(addr).continuation(end_addr).write() };
   }
 
   // nop out the checks for needing blimp kills, smft mode, etc
