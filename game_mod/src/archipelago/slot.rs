@@ -31,5 +31,5 @@ pub struct SlotData {
   pub starting_health: u16,
   pub powerup_bonuses: PowerupBonuses,
   pub rank_key_mission_lock: Option<u8>,
-  pub dealthlink_counter: Option<u8>,
+  pub deathlink_counter: Option<u8>,
 }

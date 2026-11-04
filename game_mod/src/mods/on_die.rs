@@ -10,16 +10,19 @@ define_detour_hooks! {
 
 pub fn hook_on_die() {
   let _ = OnDieHook.init_with_self(|this| {
-    // handle dealthlink stuff here
+    // deathlink
     GameState::with(|client, _, temp_state| {
-      println!("Handling deathlink");
+      // don't count up/trigger if we died because of a deathlink
       if !temp_state.deathlink_triggered
-        && let Some(deathlink_count) = client.client().slot_data().dealthlink_counter
+        && let Some(deathlink_count) = client.client().slot_data().deathlink_counter
       {
         temp_state.deathlink_counter += 1;
         if temp_state.deathlink_counter >= deathlink_count {
           temp_state.deathlink_counter = 0;
-          let _ = client.client().death_link(DeathLinkOptions::default());
+          let player = client.client().this_player().name();
+          let _ = client.client().death_link(
+            DeathLinkOptions::default().cause(format!("{} blew up too many times.", player)),
+          );
         }
       } else {
         // clear it here so we can make sure we don't send deathlinks on a receive
