@@ -40,7 +40,7 @@ impl AsLocationId for APLocation {
 impl TryFrom<i64> for APLocation {
   type Error = ();
   fn try_from(id: i64) -> Result<Self, Self::Error> {
-    let id = BASE_ID + id;
+    let id = id - BASE_ID;
     Ok(match id {
       l @ 0x300..0x308 => Self::RauserLevel(RauserLevel(l as u16 - 0x300 + 2)),
       l @ 0x400..0x47e => Self::GenericCompletion(l as u8 + 1),

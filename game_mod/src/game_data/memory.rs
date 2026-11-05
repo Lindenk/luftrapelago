@@ -31,11 +31,9 @@ enum GlobalStatsOffsets {
 
   BestScore = 0x44,
   //BestCombo = 0x48,
-  LastFightersKilled = 0x58,
-  // ...
-  TotalFightersKilled = 0x8c,
-  // ...
-  MissionStart = 0xc8,
+  TempEquippedBody = 0x1b8,   // 8-bit int, counter starting at 0
+  TempEquippedEngine = 0x1b9, // 8-bit int, counter starting at 0
+  TempEquippedWeapon = 0x1ba, // 8-bit int, counter starting at 0
 }
 
 #[repr(usize)]
@@ -218,6 +216,34 @@ impl GameMemory {
       self.get_equipped_weapon(),
       self.get_equipped_body(),
       self.get_equipped_engine(),
+    ) {
+      (Some(weapon), Some(body), Some(engine)) => Some(Plane {
+        weapon,
+        body,
+        engine,
+      }),
+      _ => None,
+    }
+  }
+
+  pub fn get_temp_equipped_weapon(&self) -> Option<WeaponType> {
+    let w: u8 = self.read_global_stats(GlobalStatsOffsets::TempEquippedWeapon);
+    WeaponType::try_from(w).ok()
+  }
+  pub fn get_temp_equipped_body(&self) -> Option<BodyType> {
+    let b: u8 = self.read_global_stats(GlobalStatsOffsets::TempEquippedBody);
+    BodyType::try_from(b).ok()
+  }
+  pub fn get_temp_equipped_engine(&self) -> Option<EngineType> {
+    let e: u8 = self.read_global_stats(GlobalStatsOffsets::TempEquippedEngine);
+    EngineType::try_from(e).ok()
+  }
+
+  pub fn get_temp_equipped_loadout(&self) -> Option<Plane> {
+    match (
+      self.get_temp_equipped_weapon(),
+      self.get_temp_equipped_body(),
+      self.get_temp_equipped_engine(),
     ) {
       (Some(weapon), Some(body), Some(engine)) => Some(Plane {
         weapon,
