@@ -150,8 +150,8 @@ class PowerupHealth(Range):
 
     display_name = "Powerup Health"
     range_start = 0
-    range_end = 20
-    default = 6
+    range_end = 30
+    default = 10
 
 class PowerupHealthBonus(Range):
     """
@@ -161,7 +161,7 @@ class PowerupHealthBonus(Range):
     display_name = "Powerup Health Bonus"
     range_start = 5
     range_end = 100
-    default = 25
+    default = 30
 
 
 class PowerupFireRate(Range):
