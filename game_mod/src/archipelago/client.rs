@@ -42,12 +42,12 @@ impl APClient {
     // apparently you can't break with a return value in a for or while loop
     // guess we choose an error prone, statically unanalyzable way to do it instead
     let mut connection = loop {
-      //let (server, slot, password) = Self::console_prompt();
-      let (server, slot, password) = (
-        "localhost:57204".to_string(),
-        "Pineapple_LRS".to_string(),
-        "".to_string(),
-      );
+      let (server, slot, password) = Self::console_prompt();
+      //let (server, slot, password) = (
+      //  "localhost:57204".to_string(),
+      //  "Pineapple_LRS".to_string(),
+      //  "".to_string(),
+      //);
       let password = if password.is_empty() {
         None
       } else {

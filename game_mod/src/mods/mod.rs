@@ -12,7 +12,6 @@ mod on_die;
 mod player;
 mod rank_keys;
 mod redirect_saves;
-mod sdl_fixes;
 mod update_tick;
 
 pub use apply_powerups_and_traps::*;
@@ -29,5 +28,4 @@ pub use on_die::*;
 pub use player::*;
 pub use rank_keys::*;
 pub use redirect_saves::*;
-pub use sdl_fixes::*;
 pub use update_tick::*;
