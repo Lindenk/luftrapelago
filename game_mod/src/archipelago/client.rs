@@ -102,8 +102,6 @@ impl APClient {
       server = String::from("archipelago.gg:38281");
     }
     let server = server.trim().to_string();
-    //let server = format!("ws://{}", server);
-    println!("Got server name: {}", server);
 
     let slot = loop {
       let mut slot = String::new();
@@ -116,7 +114,6 @@ impl APClient {
         break slot;
       }
     };
-    println!("Got slot name: {}", slot);
 
     print!("Password (press enter if none): ");
     let mut password = String::new();
