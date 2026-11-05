@@ -36,13 +36,14 @@ pub fn hook_entry() {
       // connect to the ap server (make sure this works before we start up, even
       // if we disconnect after)
       let mut ap_client = APClient::with_console_prompt();
-      let seed = &ap_client.client().seed_name().to_string();
+      let seed = ap_client.client().seed_name().to_string();
+      let player = ap_client.client().this_player().to_string();
 
       // enable debug console
       let _ = unsafe { windows::Win32::System::Console::AllocConsole() };
 
       // the client should be connected here. set up our mods and hooks
-      redirect_saves(seed);
+      redirect_saves(format!("{}_{}", player, seed).as_str());
       init_mod(ap_client);
       hook_update_tick();
 
