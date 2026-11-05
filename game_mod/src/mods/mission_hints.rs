@@ -82,7 +82,7 @@ pub fn draw_mission_hints() {
       Removed,
       Invalid,
     }
-    let hint = if let Ok(mission) = mission {
+    let hint = if let Ok(mission) = &mission {
       GameState::with(|client, _, _| {
         if matches!(
           mission.part,
@@ -125,31 +125,24 @@ pub fn draw_mission_hints() {
       Hint::Invalid
     };
 
-    let hint = match hint {
-      Hint::Hint(h) => h,
-      Hint::Completed => "All checks found".to_string(),
-      Hint::Pending => "fetching hint...".to_string(),
+    let mission_string = GameString::copy_from_game(s).to_string();
+    let num = mission.map(|m| m.num).unwrap_or(254) + 1;
+    let new_s = match hint {
+      Hint::Hint(h) => format!("{num} - {mission_string}\n {h}"),
+      Hint::Completed => format!("{mission_string}\n All checks found"),
+      Hint::Pending => format!("{num} - {mission_string}\n fetching hint..."),
       Hint::Invalid => {
-        format!("invalid mission! {:x}", mission_code)
+        format!(
+          "{num} - {mission_string}\n invalid mission! {:x}",
+          mission_code
+        )
       }
-      Hint::RankLocked => {
-        GameString::assign_from_str(s, "more rank keys required");
-        return s;
-      }
-      Hint::Locked => {
-        GameString::assign_from_str(s, "part locked");
-        return s;
-      }
-      Hint::Removed => {
-        GameString::assign_from_str(s, "All missions completed");
-        return s;
-      }
+      Hint::RankLocked => "{num} - more rank keys required".to_string(),
+      Hint::Locked => "part locked".to_string(),
+      Hint::Removed => "All missions completed".to_string(),
     };
 
-    let gs = GameString::copy_from_game(s);
-    let gs = gs.append(format!("\n  {}", hint));
-    gs.assign(s);
-
+    GameString::from_str(new_s.as_str()).assign(s);
     s
   });
   let _ = unsafe { GenerateMissionStringHook.enable() };
