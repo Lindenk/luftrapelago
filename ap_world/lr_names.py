@@ -58,7 +58,7 @@ class Filler(NameBase):
 class MiscItems(NameBase):
     ProgressiveRank = "Rank Key"
     Victory = "Victory"
-    CompletionToken = "Completion Token"
+    CompletionToken = "Completion"
 
 
 # Locations
@@ -86,7 +86,7 @@ class VictoryLocations(NameBase):
 
 
 # 126 potential unique game 'completions'
-generic_completions = [f"{n} Completion" for n in range(1, 126)]
+generic_completions = [f"{n} Completion(s)" for n in range(1, 126)]
 
 
 # the key is the name, the value is a dict for how to build it

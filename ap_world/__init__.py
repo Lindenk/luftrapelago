@@ -57,6 +57,7 @@ class LuftrausersWorld(World):
 
         self.excluded_locations: list[str] = []
         self.unique_completion_locations: list[LuftrausersLocationData] = []
+        self.generic_completion_locations: list[LuftrausersLocationData] = []
 
     def generate_early(self) -> None:
         options: LuftrausersOptions = cast(LuftrausersOptions, self.options)
@@ -77,6 +78,7 @@ class LuftrausersWorld(World):
             #   the real checks)
             self.unique_completion_locations.extend(list(unique_completion_locations))
             # add in generic completions up to what's set in options
+            self.generic_completion_locations.extend(generic_completion_locations[:options.required_completions])
             self.excluded_locations.extend(lr_names.generic_completions[options.required_completions :])
 
         # for now remove all the urauser mission checks
@@ -239,7 +241,7 @@ class LuftrausersWorld(World):
         # event token, and require each generic location to obtain that many
         # completion tokens
         if not options.use_unique_completion_checks:
-            for i, loc_data in enumerate(generic_completion_locations[:options.use_unique_completion_checks+1]):
+            for i, loc_data in enumerate(self.generic_completion_locations):
                 add_rule(
                     self.get_location(loc_data.name),
                     lambda state, i=i: state.has(lr_names.MiscItems.CompletionToken, self.player, count=i + 1),
@@ -274,16 +276,13 @@ class LuftrausersWorld(World):
                 ),
             )
         elif options.goal == 1:  # Unique completions
-            if options.use_unique_completion_checks:
-              pass
-            else:
-              loc = self.get_location(lr_names.VictoryLocations.FinishedUniqueCompletions)
-              add_rule(loc, lambda state: state.has(lr_names.MiscItems.CompletionToken, self.player,
-                count=int(options.required_completions)))
-
-            loc_completion = lr_names.generic_completions[options.required_completions - 1]
             loc = self.get_location(lr_names.VictoryLocations.FinishedUniqueCompletions)
-            add_rule(loc, lambda state: state.can_reach_location(loc_completion, self.player))
+            if options.use_unique_completion_checks:
+              for c in self.unique_completion_locations:
+                add_rule(loc, lambda state, c=c: state.can_reach_location(c.name, self.player))
+            else:
+              loc_completion = self.generic_completion_locations[-1]
+              add_rule(loc, lambda state: state.can_reach_location(loc_completion.name, self.player))
         else:
             raise Exception("Somehow no goal was set")
 
