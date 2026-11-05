@@ -1,6 +1,10 @@
 use std::ffi::c_void;
 
-use crate::{define_detour_hooks, mods::check_completion, state::GameState};
+use crate::{
+  define_detour_hooks,
+  mods::{KeybindActions, check_completion, is_pressed},
+  state::GameState,
+};
 
 define_detour_hooks! {
   static PlayerUpdate: extern "thiscall" fn(*mut c_void) -> () => 0xd05d0;
@@ -23,6 +27,9 @@ pub fn apply_player_mods() {
           // handle clearing deathlink in the die hook so we can prevent
           // triggering deathlink when receiving one
         }
+        if is_pressed(KeybindActions::EndRun) {
+          hp_ptr.write_volatile(0.); // end the run
+        };
       });
     }
 

@@ -40,6 +40,7 @@ pub fn hook_entry() {
       let player = ap_client.client().this_player().to_string();
 
       // enable debug console
+      #[cfg(debug_assertions)]
       let _ = unsafe { windows::Win32::System::Console::AllocConsole() };
 
       // the client should be connected here. set up our mods and hooks
