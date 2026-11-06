@@ -1,6 +1,6 @@
 from typing import Any, ClassVar, cast
 
-from BaseClasses import Item, ItemClassification, MultiWorld, Region, Tutorial
+from BaseClasses import CollectionState, Item, ItemClassification, MultiWorld, Region, Tutorial
 from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import add_rule
 
@@ -36,7 +36,7 @@ class LuftrausersWebWorld(WebWorld):
     option_groups = luftrausers_option_groups
 
 
-BASE_ID = 0x1f700000
+BASE_ID = 0x1F700000
 
 
 class LuftrausersWorld(World):
@@ -71,23 +71,36 @@ class LuftrausersWorld(World):
             # add in random unique completions up to the set amount
             completions = list(unique_completion_locations)
             self.random.shuffle(completions)
-            self.unique_completion_locations.extend(completions[:options.required_completions])
-            self.excluded_locations.extend([c.name for c in completions[options.required_completions:]])
+            self.unique_completion_locations.extend(completions[: options.required_completions])
+            self.excluded_locations.extend([c.name for c in completions[options.required_completions :]])
         else:
-            # allow all unique completions (because they'll just give tokens used for
-            #   the real checks)
+            # don't use unique locations as real checks
+            self.excluded_locations.extend(lr_names.unique_planes)
+
+            # allow all unique completions to use as events
             self.unique_completion_locations.extend(list(unique_completion_locations))
             # add in generic completions up to what's set in options
-            self.generic_completion_locations.extend(generic_completion_locations[:options.required_completions])
+            self.generic_completion_locations.extend(generic_completion_locations[: options.required_completions])
             self.excluded_locations.extend(lr_names.generic_completions[options.required_completions :])
 
         # for now remove all the urauser mission checks
-        self.excluded_locations.extend([name for ((part, _), name) in lr_names.weapon_missions.items()
-          if part == lr_names.WeaponNames.URauserWeapon])
-        self.excluded_locations.extend([name for ((part, _), name) in lr_names.body_missions.items()
-          if part == lr_names.BodyNames.URauserBody])
-        self.excluded_locations.extend([name for ((part, _), name) in lr_names.engine_missions.items()
-          if part == lr_names.EngineNames.URauserEngine])
+        self.excluded_locations.extend(
+            [
+                name
+                for ((part, _), name) in lr_names.weapon_missions.items()
+                if part == lr_names.WeaponNames.URauserWeapon
+            ]
+        )
+        self.excluded_locations.extend(
+            [name for ((part, _), name) in lr_names.body_missions.items() if part == lr_names.BodyNames.URauserBody]
+        )
+        self.excluded_locations.extend(
+            [
+                name
+                for ((part, _), name) in lr_names.engine_missions.items()
+                if part == lr_names.EngineNames.URauserEngine
+            ]
+        )
 
     def create_regions(self) -> None:
         """
@@ -105,15 +118,18 @@ class LuftrausersWorld(World):
             if loc.name not in self.excluded_locations
         ]
 
+        # event locations
+        locations.extend(
+            LuftrausersLocation(self.player, f"Event {loc.name}", None) for loc in self.unique_completion_locations
+        )
+
         # victory locations
         if options.goal == 0:  # launch urauser
             locations.append(LuftrausersLocation(self.player, lr_names.VictoryLocations.LaunchURauser, None))
-        elif options.goal in [1, 2, 3]:  # Unique 'completions'
+        elif options.goal == 1:  # Unique 'completions'
             locations.append(
                 LuftrausersLocation(self.player, lr_names.VictoryLocations.FinishedUniqueCompletions, None)
             )
-        elif options.goal in [4, 5]:  # score attack
-            locations.append(LuftrausersLocation(self.player, lr_names.VictoryLocations.ScoreAttack, None))
 
         # add them in
         for loc in locations:
@@ -126,6 +142,11 @@ class LuftrausersWorld(World):
     def create_item(self, name: str) -> Item:
         item = item_table[name]
         return LuftrausersItem(name, item.progression, self.base_id + item.code, self.player)
+
+    def create_event(self, location_name: str, item_name: str):
+        loc = self.get_location(location_name)
+        item = LuftrausersItem(item_name, ItemClassification.progression, None, self.player)
+        loc.place_locked_item(item)
 
     def create_items(self) -> None:
         options: LuftrausersOptions = cast(LuftrausersOptions, self.options)
@@ -169,18 +190,16 @@ class LuftrausersWorld(World):
             n = (6 - options.rank_key_mission_lock) + options.extra_rank_keys
             required_items.extend([misc["rank_keys"].item_name for _n in range(n)])
 
-        # prefill the unique plane completions to give tokens
+        # prefill the plane completion events to give tokens
         # generic completions triggered by tokens should give actual items
-        if not options.use_unique_completion_checks:
-            for loc_data in unique_completion_locations:
-                loc = self.get_location(loc_data.name)
-                loc.place_locked_item(self.create_item(lr_names.MiscItems.CompletionToken))
+        for loc in self.unique_completion_locations:
+          self.create_event(f"Event {loc.name}", lr_names.MiscItems.CompletionToken)
 
-        # filler and traps, 1 extra for the victory item
-        total_filler = total_locations - len(required_items) - 1
+        # filler and traps, 1 less for the victory item and count completion tokens
+        total_filler = total_locations - len(required_items) - len(self.unique_completion_locations) - 1
         if not options.use_unique_completion_checks:
-          # removed locked item locations
-          total_filler -= len(unique_completion_locations)
+            # removed locked item locations
+            total_filler -= len(unique_completion_locations)
 
         filler_names = list(options.filler_weights.keys())
         filler_weights = list(options.filler_weights.values())
@@ -188,7 +207,7 @@ class LuftrausersWorld(World):
 
         filler_map = {
             "Patch Up": lr_names.Filler.Patchup,
-            #"Blank": lr_names.Filler.Blank,
+            # "Blank": lr_names.Filler.Blank,
             "Gun Jam Trap": lr_names.Filler.TrapJam,
             "Engine Stall Trap": lr_names.Filler.TrapStall,
         }
@@ -224,51 +243,54 @@ class LuftrausersWorld(World):
         weapon_names = list(lr_names.WeaponNames)
         body_names = list(lr_names.BodyNames)
         engine_names = list(lr_names.EngineNames)
+
+        # difficulty logic. Ensure the player has enough powerups before expecting completions
+        total_powerups = options.powerup_health + options.powerup_fire_rate + options.powerup_bullets
+
+        def check_completion_difficulty(state: CollectionState):
+            return state.has_group("Powerups", self.player, count=total_powerups // 2)
+
         for name, build in lr_names.unique_planes.items():
             # skip any that aren't in this world
-            if name not in self.unique_completion_locations:
-              continue
+            if name not in (loc.name for loc in self.unique_completion_locations):
+                continue
 
-            add_rule(
-                self.get_location(name),
-                lambda state, build=build: state.has_all(
+            def rule(state: CollectionState, build=build) -> bool:
+                return check_completion_difficulty(state) and state.has_all(
                     [weapon_names[build["weapon"]], body_names[build["body"]], engine_names[build["engine"]]],
                     self.player,
-                ),
-            )
+                )
+
+            # completions - set it on both the locations that can give items
+            # and also events that are used by logic
+            add_rule(self.get_location(f"Event {name}"), rule)
+            if options.use_unique_completion_checks:
+                add_rule(self.get_location(name), rule)
 
         # handle progressive completions. have unique locations produce an
         # event token, and require each generic location to obtain that many
         # completion tokens
-        if not options.use_unique_completion_checks:
-            for i, loc_data in enumerate(self.generic_completion_locations):
-                add_rule(
-                    self.get_location(loc_data.name),
-                    lambda state, i=i: state.has(lr_names.MiscItems.CompletionToken, self.player, count=i + 1),
-                )
+        for i, loc_data in enumerate(self.generic_completion_locations):
+            add_rule(
+                self.get_location(loc_data.name),
+                lambda state, i=i: state.has(lr_names.MiscItems.CompletionToken, self.player, count=i + 1),
+            )
 
         # rauser level scaling rules (ie. don't put early items at high rauser levels
         # to avoid excessive grinding). Put 1 in logic to start, unlocked by more parts
         for i, loc in enumerate(lr_names.level_names):
             if i <= 4:
-              req_parts = i+3
+                req_parts = i + 3
             elif i <= 7:
-              req_parts = i+4
+                req_parts = i + 4
             else:
-              req_parts = i+5
-            add_rule(self.get_location(loc), lambda state, req_parts=req_parts:
-              state.has_group_unique("Parts", self.player, count=req_parts))
-
-        # difficulty logic. Ensure the player has enough powerups before expecting completions
-        total_powerups = options.powerup_health + options.powerup_fire_rate + options.powerup_bullets
-        for c in self.unique_completion_locations:
+                req_parts = i + 5
             add_rule(
-                self.get_location(c.name), lambda state:
-                  state.has_group("Powerups", self.player, count=total_powerups // 2)
+                self.get_location(loc),
+                lambda state, req_parts=req_parts: state.has_group_unique("Parts", self.player, count=req_parts),
             )
 
         # Set goal
-        victory_item = LuftrausersItem(lr_names.MiscItems.Victory, ItemClassification.progression, None, self.player)
         if options.goal == 0:  # URauser
             loc = self.get_location(lr_names.VictoryLocations.LaunchURauser)
             add_rule(
@@ -284,16 +306,16 @@ class LuftrausersWorld(World):
             )
         elif options.goal == 1:  # Unique completions
             loc = self.get_location(lr_names.VictoryLocations.FinishedUniqueCompletions)
-            if options.use_unique_completion_checks:
-              for c in self.unique_completion_locations:
-                add_rule(loc, lambda state, c=c: state.can_reach_location(c.name, self.player))
-            else:
-              loc_completion = self.generic_completion_locations[-1]
-              add_rule(loc, lambda state: state.can_reach_location(loc_completion.name, self.player))
+            add_rule(
+                loc,
+                lambda state: state.has(
+                    lr_names.MiscItems.CompletionToken, self.player, options.required_completions.value
+                ),
+            )
         else:
             raise Exception("Somehow no goal was set")
 
-        loc.place_locked_item(victory_item)
+        self.create_event(loc.name, lr_names.MiscItems.Victory)
         self.multiworld.completion_condition[self.player] = lambda state: state.has(
             lr_names.MiscItems.Victory, self.player
         )
@@ -305,16 +327,16 @@ class LuftrausersWorld(World):
         if options.goal == 0:
             goal = "urauser"
         elif options.goal == 1:
-            goal = "completions"
+            goal = { "completions": options.required_completions.value }
         else:
             raise Exception("Somehow no goal was set")
 
-        if options.completion_condition == 0: # blimp kill
-          completion_condition = "blimp"
+        if options.completion_condition == 0:  # blimp kill
+            completion_condition = "blimp"
         elif options.completion_condition == 10:
-          completion_condition = "score"
+            completion_condition = "score"
         else:
-          raise Exception("Somehow no valid completion condition was set")
+            raise Exception("Somehow no valid completion condition was set")
 
         data = {
             "goal": goal,
@@ -326,7 +348,7 @@ class LuftrausersWorld(World):
             "powerup_bonuses": {
                 "health": options.powerup_health_bonus.value,
             },
-            "enable_sfmt": options.enable_sfmt.value > 0
+            "enable_sfmt": options.enable_sfmt.value > 0,
         }
 
         if options.enable_rank_keys:

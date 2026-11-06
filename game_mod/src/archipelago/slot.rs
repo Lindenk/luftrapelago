@@ -4,7 +4,7 @@ use serde::Deserialize;
 #[serde(rename_all = "snake_case")]
 pub enum Goal {
   Urauser,
-  Completions,
+  Completions(u8),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]

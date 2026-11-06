@@ -44,7 +44,7 @@ powerups: dict[str, LuftrausersItemData] = {
 
 misc: dict[str, LuftrausersItemData] = {
     "rank_keys": LuftrausersItemData(0x00C0, MiscItems.ProgressiveRank, ItemClassification.progression),
-    "completion_token": LuftrausersItemData(0x00C1, MiscItems.CompletionToken, ItemClassification.progression),
+    #"completion_token": LuftrausersItemData(0x00C1, MiscItems.CompletionToken, ItemClassification.progression),
 }
 
 filler: list[LuftrausersItemData] = [

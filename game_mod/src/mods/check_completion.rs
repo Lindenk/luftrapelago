@@ -1,5 +1,10 @@
+use archipelago_rs::ClientStatus;
+
 use crate::{
-  archipelago::{location::APLocation, slot::CompletionCondition},
+  archipelago::{
+    location::APLocation,
+    slot::{CompletionCondition, Goal},
+  },
   state::GameState,
 };
 
@@ -34,6 +39,13 @@ pub fn check_completion() {
           ]);
         } else {
           let _ = client.client().mark_checked([APLocation::from(plane)]);
+        }
+
+        // check if we're done
+        if let Goal::Completions(n) = options.goal
+          && completed_planes.len() + 1 >= n as usize
+        {
+          let _ = client.client().set_status(ClientStatus::Goal);
         }
       }
     }
