@@ -69,7 +69,7 @@ pub fn draw_mission_hints() {
     let s = GenerateMissionStringHook.call(this, that);
 
     // figure out what mission location this is
-    let mission_code = MissionCode(unsafe { *(this as *const u32) });
+    let mission_code = MissionCode(unsafe { (this as *const u32).read_volatile() });
     let mission = MissionDescriptor::try_from(mission_code);
 
     // get our hints
@@ -126,7 +126,7 @@ pub fn draw_mission_hints() {
     };
 
     let mission_string = GameString::copy_from_game(s).to_string();
-    let num = mission.map(|m| m.num).unwrap_or(254) + 1;
+    let num = mission.map(|m| m.num.saturating_add(1)).unwrap_or(254);
     let new_s = match hint {
       Hint::Hint(h) => format!("{num} - {mission_string}\n {h}"),
       Hint::Completed => format!("{mission_string}\n All checks found"),

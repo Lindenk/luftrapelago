@@ -37,13 +37,16 @@ pub fn display_completions() {
 
 extern "fastcall" fn append_completion_status(str_ptr: *mut u8, parts: u32) {
   let plane = {
-    let wep = ((parts >> 16) & 0xff) as u8;
-    let body = (parts & 0xff) as u8;
-    let engine = ((parts >> 8) & 0xff) as u8;
-    Plane {
-      weapon: WeaponType::try_from_primitive(wep).unwrap(),
-      body: BodyType::try_from_primitive(body).unwrap(),
-      engine: EngineType::try_from_primitive(engine).unwrap(),
+    let wep = WeaponType::try_from_primitive(((parts >> 16) & 0xff) as u8);
+    let body = BodyType::try_from_primitive((parts & 0xff) as u8);
+    let engine = EngineType::try_from_primitive(((parts >> 8) & 0xff) as u8);
+    match (wep, body, engine) {
+      (Ok(weapon), Ok(body), Ok(engine)) => Plane {
+        weapon,
+        body,
+        engine,
+      },
+      _ => return,
     }
   };
 

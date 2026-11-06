@@ -52,10 +52,10 @@ pub fn apply_powerups_and_traps() {
         }
       }
       unsafe {
-        // increase max bullets too  (for missles)
+        // increase max bullets too  (for missles, my god missles need the bonus)
         let maxbullets_ptr = stats.add(0x1e);
         let mut maxbullets = maxbullets_ptr.read_volatile();
-        maxbullets += bullet_items;
+        maxbullets += bullet_items * 3;
         maxbullets_ptr.write_volatile(maxbullets);
       }
     });

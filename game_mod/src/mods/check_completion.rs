@@ -30,23 +30,39 @@ pub fn check_completion() {
         })
         .collect();
 
-      if !completed_planes.contains(&plane) {
-        // if we haven't got this check, trigger it
-        if options.send_generic_completions {
-          let _ = client.client().mark_checked([
-            APLocation::from(plane),
-            APLocation::GenericCompletion(1 + completed_planes.len() as u8),
-          ]);
-        } else {
-          let _ = client.client().mark_checked([APLocation::from(plane)]);
-        }
+      // check if we're done
+      if let Goal::Completions(n) = options.goal
+        && completed_planes.len() >= n as usize
+      {
+        let _ = client.client().set_status(ClientStatus::Goal);
+      }
 
-        // check if we're done
-        if let Goal::Completions(n) = options.goal
-          && completed_planes.len() + 1 >= n as usize
+      // check if we finished a generic completion (seperately to avoid weird
+      // races)
+      if options.send_generic_completions {
+        if let Some(highest_generic_completion) = client
+          .client()
+          .checked_locations()
+          .filter_map(|l| APLocation::try_from(l).ok())
+          .filter_map(|l| match l {
+            APLocation::GenericCompletion(c) => Some(c as usize),
+            _ => None,
+          })
+          .max()
         {
-          let _ = client.client().set_status(ClientStatus::Goal);
+          if completed_planes.len() > highest_generic_completion {
+            // mark all generic completions up to it
+            let _ = client.client().mark_checked(
+              (highest_generic_completion..=completed_planes.len())
+                .map(|i| APLocation::GenericCompletion(i as u8)),
+            );
+          }
         }
+      }
+
+      // if we haven't got this check, trigger it
+      if !completed_planes.contains(&plane) {
+        let _ = client.client().mark_checked([APLocation::from(plane)]);
       }
     }
   });
