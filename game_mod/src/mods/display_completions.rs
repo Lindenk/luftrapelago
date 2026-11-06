@@ -1,5 +1,3 @@
-use std::ffi::{c_int, c_void};
-
 use archipelago_rs::AsLocationId;
 use num_enum::TryFromPrimitive;
 
@@ -9,8 +7,7 @@ use crate::{
   fn_hook::get_base_address,
   game_data::{
     game_string::GameString,
-    mission::{MissionCode, MissionDescriptor},
-    plane::{BodyType, EngineType, Part, Plane, WeaponType},
+    plane::{BodyType, EngineType, Plane, WeaponType},
   },
   patcher::PatchBuilder,
   state::GameState,

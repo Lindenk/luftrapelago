@@ -247,10 +247,17 @@ class LuftrausersWorld(World):
                     lambda state, i=i: state.has(lr_names.MiscItems.CompletionToken, self.player, count=i + 1),
                 )
 
-        # level scaling rules (ie. don't put early items at high rauser levels
+        # rauser level scaling rules (ie. don't put early items at high rauser levels
         # to avoid excessive grinding). Put 1 in logic to start, unlocked by more parts
         for i, loc in enumerate(lr_names.level_names):
-            add_rule(self.get_location(loc), lambda state, i=i: state.has_group_unique("Parts", self.player, count=i+3))
+            if i <= 4:
+              req_parts = i+3
+            elif i <= 7:
+              req_parts = i+4
+            else:
+              req_parts = i+5
+            add_rule(self.get_location(loc), lambda state, req_parts=req_parts:
+              state.has_group_unique("Parts", self.player, count=req_parts))
 
         # difficulty logic. Ensure the player has enough powerups before expecting completions
         total_powerups = options.powerup_health + options.powerup_fire_rate + options.powerup_bullets

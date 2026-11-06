@@ -623,10 +623,5 @@
     "weapon": 4,
     "body": 4,
     "engine": 4
-  },
-  "URAUSER": {
-    "weapon": 5,
-    "body": 5,
-    "engine": 5
   }
 }

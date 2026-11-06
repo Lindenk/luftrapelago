@@ -137,7 +137,7 @@ pub fn draw_mission_hints() {
           mission_code
         )
       }
-      Hint::RankLocked => "{num} - more rank keys required".to_string(),
+      Hint::RankLocked => format!("{num} - more rank keys required").to_string(),
       Hint::Locked => "part locked".to_string(),
       Hint::Removed => "All missions completed".to_string(),
     };
