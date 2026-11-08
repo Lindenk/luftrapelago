@@ -21,8 +21,8 @@ from .lr_locations import (
 from .lr_options import LuftrausersOptions, luftrausers_option_groups
 
 # read our own archipelago json
-with open(os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), "archipelago.json"))) as f:
-    ARCHIPELAGO_JSON = json.load(f)
+#with open(os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), "archipelago.json"))) as f:
+#    ARCHIPELAGO_JSON = json.load(f)
 
 
 class LuftrausersWebWorld(WebWorld):
@@ -345,7 +345,8 @@ class LuftrausersWorld(World):
             raise Exception("Somehow no valid completion condition was set")
 
         data = {
-            "version": ARCHIPELAGO_JSON["world_version"],
+            # TODO: Don't hardcode this
+            "version": "0.1.1", #ARCHIPELAGO_JSON["world_version"],
             "goal": goal,
             "completion_condition": completion_condition,
             "completion_locations": [c.code for c in self.unique_completion_locations],
