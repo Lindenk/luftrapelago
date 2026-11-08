@@ -17,6 +17,7 @@ Refer to [the apworld doc for the game](ap_world/docs/en_Luftrausers.md)
 3. Generate the world and host it
 4. Copy the game mod `version.dll` to your installation of Luftrausers.
 5. **If on Linux** Make sure you install the Windows version of the game and run it through Proton/Wine. This mod was entirely developed on Linux but it was much easier to support cross platform by targeting the Windows version
+5a. **If on Linux** Set `WINEDLLOVERRIDES="version=n,b" %command%` in your launch options (if running through steam). Otherwise it will silently ignore the mod
 6. Launch the game. A console window will appear prompting you to enter the AP server's info
 7. Get checks and buy bk
 
@@ -33,9 +34,12 @@ Features planned but not currently implemented include:
 # Known Issues
 
 - Gun jam traps and bullet upgrades are a little jank and don't work all that well with most weapons. The plan is to replace these with progressive parts
+- There's a bug with missions that care about firing non-stop. These can only be completed with the laser if you've gained any fire rate increases
+- The highlighting of fully completed mission chains seems to carry over to other mission for the same part type (when cycling through them in the hangar)
 
 # AI Disclaimer
 AI was used in a limited capacity during development of this mod:
-- There is no AI code in the APWorld, and very minor AI code in the game mod (specifically the `fn_hooks` rust macro, because writing Rust macros by hand is a bad time). Any AI code was heavily audited
+- No AI was used for anything creative, such as game design, art, music, etc
+- There is no AI code in the APWorld, and very little in the game mod (specifically the `fn_hooks` rust macro, because writing Rust macros by hand is a bad time). Any AI code was heavily audited
 - All other code released was written by me
 - AI was used to aid in making sense of the decompilation. There are only so many lines of `puVar27` I can sift through before my eyes glaze over
