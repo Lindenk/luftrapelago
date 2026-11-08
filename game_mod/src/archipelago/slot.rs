@@ -1,3 +1,4 @@
+use semver::Version;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
@@ -23,6 +24,7 @@ pub struct PowerupBonuses {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct SlotData {
+  pub version: Version,
   pub goal: Goal,
   pub completion_condition: CompletionCondition,
   pub completion_locations: Vec<i64>,

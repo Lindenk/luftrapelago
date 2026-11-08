@@ -13,6 +13,7 @@ detour = "0.10.0"
 num_enum = "0.7.6"
 paste = "1.0.15"
 rand = "0.10.3"
+semver = { version = "1.0.28", features = ["serde"] }
 serde = { version = "1.0.229", features = ["alloc", "derive"] }
 ustr = { version = "1.1.0", features = ["serde"] }
 windows = { version = "0.58", features = [

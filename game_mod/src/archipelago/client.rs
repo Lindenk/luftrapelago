@@ -4,6 +4,7 @@ use std::{
 };
 
 use archipelago_rs::{self as ap_rs, ConnectionOptions, ConnectionState};
+use semver::Version;
 use ustr::Ustr;
 use windows::Win32::System::Console::{AllocConsole, FreeConsole};
 
@@ -39,8 +40,6 @@ impl APClient {
     // Display a windows console for connection detail. Maybe later I'll make it
     // look nicer and more in the game
 
-    // apparently you can't break with a return value in a for or while loop
-    // guess we choose an error prone, statically unanalyzable way to do it instead
     let mut connection = loop {
       let (server, slot, password) = Self::console_prompt();
       //let (server, slot, password) = (
@@ -75,6 +74,33 @@ impl APClient {
         ConnectionState::Connected(_) => break conn,
       };
     };
+
+    // check against the version. Ignore the patch, give a warning on minor
+    // version, and refuse to start on major
+    let ver = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
+    let apworld_version = connection.client().unwrap().slot_data().version.clone();
+    if ver.major != apworld_version.major {
+      println!("Incompatable versions detected!");
+      println!("APWorld version: {apworld_version}, Cleint mod version: {ver}");
+      if ver < apworld_version {
+        println!("Please update your client mod");
+      } else {
+        println!("Please update your apworld");
+      }
+
+      io::stdout().flush().unwrap();
+      io::stdin().read_line(&mut String::default()).unwrap();
+      std::process::exit(1);
+    } else if ver.minor != apworld_version.minor {
+      println!("APWorld version: {apworld_version}, Cleint mod version: {ver}");
+      if ver < apworld_version {
+        println!("WARNING: Your client mod is out of date. Please update")
+      } else {
+        println!("WARNING: Your apworld is out of date. Please update")
+      }
+
+      std::thread::sleep(Duration::from_secs(3));
+    }
 
     unsafe {
       let _ = FreeConsole();

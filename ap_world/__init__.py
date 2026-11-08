@@ -1,3 +1,5 @@
+import json
+import os
 from typing import Any, ClassVar, cast
 
 from BaseClasses import CollectionState, Item, ItemClassification, MultiWorld, Region, Tutorial
@@ -17,6 +19,10 @@ from .lr_locations import (
     unique_completion_locations,
 )
 from .lr_options import LuftrausersOptions, luftrausers_option_groups
+
+# read our own archipelago json
+with open(os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), "archipelago.json"))) as f:
+    ARCHIPELAGO_JSON = json.load(f)
 
 
 class LuftrausersWebWorld(WebWorld):
@@ -193,10 +199,10 @@ class LuftrausersWorld(World):
         # prefill the plane completion events to give tokens
         # generic completions triggered by tokens should give actual items
         for loc in self.unique_completion_locations:
-          self.create_event(f"Event {loc.name}", lr_names.MiscItems.CompletionToken)
+            self.create_event(f"Event {loc.name}", lr_names.MiscItems.CompletionToken)
 
         # filler and traps, 1 less for the victory item and count completion tokens
-        total_filler = total_locations - len(required_items) - len(self.unique_completion_locations) - 1
+        total_filler = total_locations - len(required_items) - 1
         if not options.use_unique_completion_checks:
             # removed locked item locations
             total_filler -= len(unique_completion_locations)
@@ -327,7 +333,7 @@ class LuftrausersWorld(World):
         if options.goal == 0:
             goal = "urauser"
         elif options.goal == 1:
-            goal = { "completions": options.required_completions.value }
+            goal = {"completions": options.required_completions.value}
         else:
             raise Exception("Somehow no goal was set")
 
@@ -339,6 +345,7 @@ class LuftrausersWorld(World):
             raise Exception("Somehow no valid completion condition was set")
 
         data = {
+            "version": ARCHIPELAGO_JSON["world_version"],
             "goal": goal,
             "completion_condition": completion_condition,
             "completion_locations": [c.code for c in self.unique_completion_locations],
