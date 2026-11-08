@@ -92,11 +92,15 @@ pub fn draw_mission_hints() {
         ) {
           return Hint::Removed;
         }
-        if client.get_parts().find(|p| *p == mission.part).is_none() {
-          return Hint::Locked;
-        }
         if mission.num >= 5 {
           return Hint::Completed;
+        }
+        if client
+          .get_parts()
+          .find(|p| *p == mission.part.clone())
+          .is_none()
+        {
+          return Hint::Locked;
         }
         if !client.has_enough_rank_keys(mission.num) {
           return Hint::RankLocked;
