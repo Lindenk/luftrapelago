@@ -40,7 +40,7 @@ pub fn check_completion() {
       // check if we finished a generic completion (seperately to avoid weird
       // races)
       if options.send_generic_completions {
-        if let Some(highest_generic_completion) = client
+        let highest_generic_completion = client
           .client()
           .checked_locations()
           .filter_map(|l| APLocation::try_from(l).ok())
@@ -49,14 +49,13 @@ pub fn check_completion() {
             _ => None,
           })
           .max()
-        {
-          if completed_planes.len() > highest_generic_completion {
-            // mark all generic completions up to it
-            let _ = client.client().mark_checked(
-              (highest_generic_completion..=completed_planes.len())
-                .map(|i| APLocation::GenericCompletion(i as u8)),
-            );
-          }
+          .unwrap_or(0);
+
+        if completed_planes.len() > highest_generic_completion {
+          // mark all generic completions up to it
+          let _ = client.client().mark_checked(
+            (1..=completed_planes.len()).map(|i| APLocation::GenericCompletion(i as u8)),
+          );
         }
       }
 
