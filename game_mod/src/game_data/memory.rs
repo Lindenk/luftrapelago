@@ -3,13 +3,16 @@ use std::{
   ops::Add,
 };
 
-use crate::game_data::{
-  mission::{MissionCode, MissionDescriptor},
-  plane::{BodyType, EngineType, Part, Plane, WeaponType},
+use crate::{
+  fn_hook::get_base_address,
+  game_data::{
+    mission::{MissionCode, MissionDescriptor},
+    plane::{BodyType, EngineType, Part, Plane, WeaponType},
+  },
 };
 
-const GLOBAL_STATS_PTR: usize = 0x01ab3510;
-const GLOBAL_PLAYER_PTR: usize = 0x01ab34c8;
+const GLOBAL_STATS_PTR: usize = 0x16b3510;
+const GLOBAL_PLAYER_PTR: usize = 0x16b34c8;
 
 #[derive(Copy, Clone)]
 pub struct GameMemory {
@@ -64,18 +67,20 @@ enum PlayerOffsets {
 
 impl GameMemory {
   pub fn init() -> Self {
+    let global_stats_addr = GLOBAL_STATS_PTR + get_base_address();
+    let player_stats_addr = GLOBAL_PLAYER_PTR + get_base_address();
     println!(
       "Pointer to global stats and player ram is currently: {:x}, {:x}",
-      GLOBAL_STATS_PTR, GLOBAL_PLAYER_PTR
+      global_stats_addr, player_stats_addr
     );
     let stats_ptr = {
-      let ptr = (GLOBAL_STATS_PTR) as *const usize;
+      let ptr = (global_stats_addr) as *const usize;
       unsafe { std::ptr::read_volatile(ptr) }
     };
     println!("Set base global stats ptr: {:x}", stats_ptr);
 
     let player_ptr = {
-      let ptr = (GLOBAL_PLAYER_PTR) as *const usize;
+      let ptr = (player_stats_addr) as *const usize;
       unsafe { std::ptr::read_volatile(ptr) }
     };
     println!("Set base global player ptr: {:x}", player_ptr);
