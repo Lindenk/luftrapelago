@@ -13,9 +13,9 @@ Refer to [the apworld doc for the game](ap_world/docs/en_Luftrausers.md)
 ## Quick Setup
 
 1. Grab the APWorld and game mod from the latest release.
-2. Install the APWorld wherever the world will be generated
+2. Install the APWorld wherever the world will be generated, such as the Archipelago launcher using the Install APWorld option
 3. Generate the world and host it
-4. Copy the game mod `version.dll` to your installation of Luftrausers.
+4. Copy the game mod `version.dll` to your installation of Luftrausers. It should be next to the LUFTRAUSERS exe (for steam this will be in `<path_to_steam>/steam/steamapps/common/Luftrausers/bin/`)
 5. **If on Linux** Make sure you install the Windows version of the game and run it through Proton/Wine. This mod was entirely developed on Linux but it was much easier to support cross platform by targeting the Windows version
 5a. **If on Linux** Set `WINEDLLOVERRIDES="version=n,b" %command%` in your launch options (if running through steam). Otherwise it will silently ignore the mod
 6. Launch the game. A console window will appear prompting you to enter the AP server's info
