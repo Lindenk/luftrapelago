@@ -7,6 +7,7 @@ use crate::{
     memory::GameMemory,
     plane::{BodyType, EngineType, Part, WeaponType},
   },
+  memory_matcher::MemoryMatcher,
   state::GameState,
 };
 
@@ -20,6 +21,16 @@ pub fn init_mod(ap_client: APClient) {
   // hook right after the game successfully loads it's save file and grab
   // the global game stats pointer, and modify the starting data as needed
   let _ = MasterGameInitHook.init_with_self(move |param1| {
+    println!("Attempting to find a match...");
+    let _ = MemoryMatcher::new()
+      .addr_at()
+      .skip(8)
+      .match_bytes(&[0x89, 0x74, 0x24, 0x3c, 0x89, 0x7c, 0x24, 0x38, 0xc6])
+      .skip(4)
+      .match_bytes(&[0xe8])
+      .follow_rel()
+      .match_bytes(&[0x55, 0x8b, 0xec]);
+
     println!("Calling original init game function");
     let res = MasterGameInitHook.call(param1);
 

@@ -41,12 +41,12 @@ impl APClient {
     // look nicer and more in the game
 
     let mut connection = loop {
-      let (server, slot, password) = Self::console_prompt();
-      //let (server, slot, password) = (
-      //  "localhost:61446".to_string(),
-      //  "Pineapple_LRS".to_string(),
-      //  "".to_string(),
-      //);
+      //let (server, slot, password) = Self::console_prompt();
+      let (server, slot, password) = (
+        "localhost:64791".to_string(),
+        "Pineapple_LRS".to_string(),
+        "".to_string(),
+      );
       let password = if password.is_empty() {
         None
       } else {

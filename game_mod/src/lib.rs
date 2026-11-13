@@ -1,6 +1,7 @@
 mod archipelago;
 mod fn_hook;
 mod game_data;
+mod memory_matcher;
 mod mods;
 mod patcher;
 mod state;
